@@ -69,6 +69,10 @@ public static class DependencyInjection
             IProductCatalogRepository,
             ProductCatalogRepository>();
 
+        services.AddScoped<
+            ISellerListingRepository,
+            SellerListingRepository>();
+
         return services;
     }
 }
