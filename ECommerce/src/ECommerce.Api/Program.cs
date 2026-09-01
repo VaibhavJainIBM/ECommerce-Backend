@@ -1,3 +1,5 @@
+using System.Net.Mail;
+using ECommerce.Infrastructure.Identity;
 using ECommerce.Api.Authentication;
 using ECommerce.Api.ExceptionHandling;
 using ECommerce.Application;
@@ -37,7 +39,50 @@ builder.Services.AddInfrastructure(connectionString);
 builder.Services.AddJwtAuthentication(
     builder.Configuration);
 
+builder.Services
+    .AddOptions<AdminSeedOptions>()
+    .Bind(
+        builder.Configuration.GetSection(
+            AdminSeedOptions.SectionName))
+    .Validate(
+        options =>
+            !options.Enabled ||
+            MailAddress.TryCreate(
+                options.Email,
+                out _),
+        "AdminSeed:Email must be a valid email address.")
+    .Validate(
+        options =>
+            !options.Enabled ||
+            !string.IsNullOrWhiteSpace(
+                options.FirstName),
+        "AdminSeed:FirstName is required.")
+    .Validate(
+        options =>
+            !options.Enabled ||
+            !string.IsNullOrWhiteSpace(
+                options.LastName),
+        "AdminSeed:LastName is required.")
+    .Validate(
+        options =>
+            !options.Enabled ||
+            (!string.IsNullOrWhiteSpace(
+                options.Password) &&
+             options.Password.Length >= 8),
+        "AdminSeed:Password is required and must " +
+        "contain at least 8 characters.")
+    .ValidateOnStart();
+
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var identitySeeder =
+        scope.ServiceProvider
+            .GetRequiredService<IdentitySeeder>();
+
+    await identitySeeder.SeedAsync();
+}
 
 app.UseExceptionHandler();
 app.UseStatusCodePages();

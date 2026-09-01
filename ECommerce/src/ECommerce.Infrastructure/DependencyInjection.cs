@@ -39,6 +39,7 @@ public static class DependencyInjection
             .AddEntityFrameworkStores<ECommerceDbContext>();
 
         services.AddScoped<IIdentityService, IdentityService>();
+        services.AddScoped<IdentitySeeder>();
 
         services.AddOptions<JwtOptions>();
 
