@@ -36,6 +36,12 @@ public sealed class Seller : AuditableEntity
     public ICollection<Warehouse> Warehouses { get; private set; }
         = new List<Warehouse>();
 
+    public ICollection<SellerListing> Listings
+    {
+        get;
+        private set;
+    } = new List<SellerListing>();
+
     public ICollection<SellerRole> Roles { get; private set; }
     = new List<SellerRole>();
 

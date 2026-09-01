@@ -3,6 +3,7 @@ using ECommerce.Application.Sellers;
 using ECommerce.Application.Sellers.Dtos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ECommerce.Api.Authorization;
 
 namespace ECommerce.Api.Controllers;
 
@@ -10,7 +11,8 @@ namespace ECommerce.Api.Controllers;
 [ApiController]
 [Route("api/sellers")]
 public sealed class SellersController(
-    ISellerOnboardingService onboardingService)
+    ISellerOnboardingService onboardingService,
+    ISellerQueryService queryService)
     : ControllerBase
 {
     [HttpPost]
@@ -42,6 +44,53 @@ public sealed class SellersController(
             result.Value!);
     }
 
+    [HttpGet("mine")]
+    [ProducesResponseType(
+    typeof(MySellerResponseDto[]),
+    StatusCodes.Status200OK)]
+    [ProducesResponseType(
+    typeof(ProblemDetails),
+    StatusCodes.Status401Unauthorized)]
+    public async Task<
+    ActionResult<IReadOnlyCollection<MySellerResponseDto>>>
+    GetMineAsync(
+        CancellationToken cancellationToken)
+    {
+        var result = await queryService.GetMineAsync(
+            cancellationToken);
+
+        if (result.IsFailure)
+        {
+            return ToProblem(result.Errors);
+        }
+
+        return Ok(result.Value!);
+    }
+
+    [Authorize(Policy = SellerPolicies.Owner)]
+    [HttpGet("{sellerId:guid}/owner-access")]
+    [ProducesResponseType(
+    StatusCodes.Status200OK)]
+    [ProducesResponseType(
+    typeof(ProblemDetails),
+    StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(
+    typeof(ProblemDetails),
+    StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(
+    typeof(ProblemDetails),
+    StatusCodes.Status404NotFound)]
+    public IActionResult ConfirmOwnerAccess(
+    Guid sellerId)
+    {
+        return Ok(new
+        {
+            sellerId,
+            access = "Owner",
+            message =
+                "Seller Owner access confirmed."
+        });
+    }
     private ActionResult ToProblem(
         IReadOnlyCollection<Error> errors)
     {

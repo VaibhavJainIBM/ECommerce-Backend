@@ -1,6 +1,6 @@
 ﻿using ECommerce.Application.Abstractions.Persistence;
 using ECommerce.Infrastructure.Persistence.Repositories;
-
+using ECommerce.Application.Abstractions.Authorization;
 using ECommerce.Application.Abstractions.Authentication;
 using ECommerce.Application.Abstractions.Identity;
 using ECommerce.Infrastructure.Authentication;
@@ -56,6 +56,14 @@ public static class DependencyInjection
         services.AddScoped<
             ISellerOnboardingRepository,
             SellerOnboardingRepository>();
+
+        services.AddScoped<
+            ISellerQueryRepository,
+            SellerQueryRepository>();
+
+        services.AddScoped<
+            ISellerAccessReader,
+            SellerAccessReader>();
 
         return services;
     }

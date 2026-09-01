@@ -4,6 +4,7 @@ using ECommerce.Api.Authentication;
 using ECommerce.Api.ExceptionHandling;
 using ECommerce.Application;
 using ECommerce.Infrastructure;
+using ECommerce.Api.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -72,6 +73,9 @@ builder.Services
         "AdminSeed:Password is required and must " +
         "contain at least 8 characters.")
     .ValidateOnStart();
+
+
+builder.Services.AddSellerAuthorization();
 
 var app = builder.Build();
 

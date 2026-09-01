@@ -32,6 +32,15 @@ public sealed class ECommerceDbContext(
     public DbSet<WarehouseAssignment> WarehouseAssignments =>
         Set<WarehouseAssignment>();
 
+    public DbSet<Product> Products =>
+    Set<Product>();
+
+    public DbSet<ProductVariant> ProductVariants =>
+        Set<ProductVariant>();
+
+    public DbSet<SellerListing> SellerListings =>
+        Set<SellerListing>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

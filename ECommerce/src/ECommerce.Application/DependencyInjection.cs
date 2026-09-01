@@ -17,6 +17,10 @@ public static class DependencyInjection
             ISellerOnboardingService,
             SellerOnboardingService>();
 
+        services.AddScoped<
+            ISellerQueryService,
+            SellerQueryService>();
+
         return services;
     }
 }
