@@ -1,6 +1,7 @@
 ﻿using ECommerce.Application.Authentication;
 using ECommerce.Application.Sellers;
 using Microsoft.Extensions.DependencyInjection;
+using ECommerce.Application.Catalog;
 
 namespace ECommerce.Application;
 
@@ -20,6 +21,10 @@ public static class DependencyInjection
         services.AddScoped<
             ISellerQueryService,
             SellerQueryService>();
+
+        services.AddScoped<
+            IAdminCatalogService,
+            AdminCatalogService>();
 
         return services;
     }

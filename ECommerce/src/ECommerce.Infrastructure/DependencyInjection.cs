@@ -65,6 +65,10 @@ public static class DependencyInjection
             ISellerAccessReader,
             SellerAccessReader>();
 
+        services.AddScoped<
+            IProductCatalogRepository,
+            ProductCatalogRepository>();
+
         return services;
     }
 }
