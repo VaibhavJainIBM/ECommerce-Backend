@@ -1,4 +1,5 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+﻿using ECommerce.Application.Abstractions.Authentication;
+using System.IdentityModel.Tokens.Jwt;
 using ECommerce.Infrastructure.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;
@@ -85,6 +86,12 @@ public static class AuthenticationExtensions
                 });
 
         services.AddAuthorization();
+
+        services.AddHttpContextAccessor();
+
+        services.AddScoped<
+            ICurrentUser,
+            CurrentUser>();
 
         return services;
     }
