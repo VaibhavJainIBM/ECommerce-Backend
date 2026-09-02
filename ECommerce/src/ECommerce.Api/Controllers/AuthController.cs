@@ -195,9 +195,7 @@ public sealed class AuthController(
             instance: HttpContext.Request.Path,
             extensions: new Dictionary<string, object?>
             {
-                ["code"] = code,
-                ["traceId"] =
-                    HttpContext.TraceIdentifier
+                ["code"] = code
             });
     }
 

@@ -157,9 +157,7 @@ public sealed class SellersController(
             instance: HttpContext.Request.Path,
             extensions: new Dictionary<string, object?>
             {
-                ["code"] = code,
-                ["traceId"] =
-                    HttpContext.TraceIdentifier
+                ["code"] = code
             });
     }
 

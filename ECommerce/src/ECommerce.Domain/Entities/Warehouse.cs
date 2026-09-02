@@ -53,6 +53,12 @@ public sealed class Warehouse : AuditableEntity
         private set;
     } = new List<WarehouseAssignment>();
 
+    public ICollection<InventoryItem> InventoryItems
+    {
+        get;
+        private set;
+    } = new List<InventoryItem>();
+
     public void UpdateDetails(
         string name,
         Address address)

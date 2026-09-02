@@ -54,6 +54,88 @@ public sealed class SellerListingsController(
             result.Value!);
     }
 
+    [HttpPatch("{listingId:guid}/price")]
+    [ProducesResponseType(
+    typeof(SellerListingResponseDto),
+    StatusCodes.Status200OK)]
+    [ProducesResponseType(
+    typeof(ValidationProblemDetails),
+    StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(
+    typeof(ProblemDetails),
+    StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(
+    typeof(ProblemDetails),
+    StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(
+    typeof(ProblemDetails),
+    StatusCodes.Status404NotFound)]
+    [ProducesResponseType(
+    typeof(ProblemDetails),
+    StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<SellerListingResponseDto>>
+    UpdatePriceAsync(
+        Guid sellerId,
+        Guid listingId,
+        [FromBody]
+        UpdateSellerListingPriceRequestDto? request,
+        CancellationToken cancellationToken)
+    {
+        var result = await listingService.UpdatePriceAsync(
+            sellerId,
+            listingId,
+            request,
+            cancellationToken);
+
+        if (result.IsFailure)
+        {
+            return ToProblem(result.Errors);
+        }
+
+        return Ok(result.Value!);
+    }
+
+    [HttpPost("{listingId:guid}/archive")]
+    [ProducesResponseType(
+    typeof(SellerListingResponseDto),
+    StatusCodes.Status200OK)]
+    [ProducesResponseType(
+    typeof(ValidationProblemDetails),
+    StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(
+    typeof(ProblemDetails),
+    StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(
+    typeof(ProblemDetails),
+    StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(
+    typeof(ProblemDetails),
+    StatusCodes.Status404NotFound)]
+    [ProducesResponseType(
+    typeof(ProblemDetails),
+    StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<SellerListingResponseDto>>
+    ArchiveAsync(
+        Guid sellerId,
+        Guid listingId,
+        [FromBody]
+        ArchiveSellerListingRequestDto? request,
+        CancellationToken cancellationToken)
+    {
+        var result = await listingService.ArchiveAsync(
+            sellerId,
+            listingId,
+            request,
+            cancellationToken);
+
+        if (result.IsFailure)
+        {
+            return ToProblem(result.Errors);
+        }
+
+        return Ok(result.Value!);
+    }
+
     [HttpGet]
     [ProducesResponseType(
     typeof(PagedSellerListingsResponseDto),
@@ -154,7 +236,11 @@ public sealed class SellerListingsController(
             error.Code ==
                 SellerListingErrors.DuplicateSellerSkuCode ||
             error.Code ==
-                SellerListingErrors.DuplicateSellerVariantCode)
+                SellerListingErrors.DuplicateSellerVariantCode ||
+            error.Code ==
+                SellerListingErrors.ListingStateConflictCode ||
+            error.Code ==
+                SellerListingErrors.ConcurrencyConflictCode)
         {
             return ApiProblem(
                 StatusCodes.Status409Conflict,
@@ -191,10 +277,10 @@ public sealed class SellerListingsController(
     }
 
     private ObjectResult ApiProblem(
-        int statusCode,
-        string title,
-        string detail,
-        string code)
+    int statusCode,
+    string title,
+    string detail,
+    string code)
     {
         return Problem(
             statusCode: statusCode,
@@ -203,9 +289,7 @@ public sealed class SellerListingsController(
             instance: HttpContext.Request.Path,
             extensions: new Dictionary<string, object?>
             {
-                ["code"] = code,
-                ["traceId"] =
-                    HttpContext.TraceIdentifier
+                ["code"] = code
             });
     }
 }

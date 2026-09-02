@@ -3,6 +3,7 @@ using ECommerce.Application.Sellers;
 using Microsoft.Extensions.DependencyInjection;
 using ECommerce.Application.Catalog;
 using ECommerce.Application.Listings;
+using ECommerce.Application.Warehouses;
 
 namespace ECommerce.Application;
 
@@ -30,6 +31,14 @@ public static class DependencyInjection
         services.AddScoped<
             ISellerListingService,
             SellerListingService>();
+
+        services.AddScoped<
+            IWarehouseService,
+            WarehouseService>();
+       
+        services.AddScoped<
+            ISellerLifecycleService,
+            SellerLifecycleService>();
 
         return services;
     }

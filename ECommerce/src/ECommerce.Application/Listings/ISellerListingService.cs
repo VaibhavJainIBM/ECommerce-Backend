@@ -21,4 +21,19 @@ public interface ISellerListingService
             Guid sellerId,
             Guid listingId,
             CancellationToken cancellationToken = default);
+
+    Task<Result<SellerListingResponseDto>>
+    UpdatePriceAsync(
+        Guid sellerId,
+        Guid listingId,
+        UpdateSellerListingPriceRequestDto? request,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<SellerListingResponseDto>>
+        ArchiveAsync(
+            Guid sellerId,
+            Guid listingId,
+            ArchiveSellerListingRequestDto? request,
+            CancellationToken cancellationToken = default);
+
 }

@@ -120,6 +120,192 @@ public sealed class SellerListingService(
             response);
     }
 
+    public async Task<Result<SellerListingResponseDto>>
+    UpdatePriceAsync(
+        Guid sellerId,
+        Guid listingId,
+        UpdateSellerListingPriceRequestDto? request,
+        CancellationToken cancellationToken = default)
+    {
+        var errors = new List<Error>();
+
+        ValidateListingIds(
+            sellerId,
+            listingId,
+            errors);
+
+        if (request is null)
+        {
+            errors.Add(
+                SellerListingErrors.PriceUpdateRequestRequired);
+        }
+        else
+        {
+            ValidatePrice(
+                request.PriceAmount,
+                errors);
+
+            ValidateCurrency(
+                request.CurrencyCode,
+                errors);
+
+            ValidateRowVersion(
+                request.RowVersion,
+                errors);
+        }
+
+        if (errors.Count > 0)
+        {
+            return Result<SellerListingResponseDto>.Failure(
+                errors);
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var sellerStatus =
+            await repository.GetSellerStatusAsync(
+                sellerId,
+                cancellationToken);
+
+        if (!sellerStatus.HasValue)
+        {
+            return Result<SellerListingResponseDto>.Failure(
+                SellerListingErrors.SellerNotFound);
+        }
+
+        if (!CanSellerChangePrice(
+                sellerStatus.Value))
+        {
+            return Result<SellerListingResponseDto>.Failure(
+                SellerListingErrors.SellerCannotChangePrice(
+                    sellerStatus.Value.ToString()));
+        }
+
+        var listing = await repository.GetTrackedAsync(
+            sellerId,
+            listingId,
+            cancellationToken);
+
+        if (listing is null)
+        {
+            return Result<SellerListingResponseDto>.Failure(
+                SellerListingErrors.ListingNotFound(
+                    listingId));
+        }
+
+        if (!listing.CanChangePrice)
+        {
+            return Result<SellerListingResponseDto>.Failure(
+                SellerListingErrors.PriceChangeNotAllowed(
+                    listing.Status.ToString()));
+        }
+
+        var price = new Money(
+            request!.PriceAmount,
+            request.CurrencyCode!.Trim());
+
+        var expectedRowVersion =
+            Convert.FromBase64String(
+                request.RowVersion!.Trim());
+
+        listing.ChangePrice(price);
+
+        var outcome =
+            await repository.SaveWithConcurrencyAsync(
+                listing,
+                expectedRowVersion,
+                cancellationToken);
+
+        if (outcome ==
+            SellerListingSaveOutcome.ConcurrencyConflict)
+        {
+            return Result<SellerListingResponseDto>.Failure(
+                SellerListingErrors.ConcurrencyConflict);
+        }
+
+        return Result<SellerListingResponseDto>.Success(
+            Map(listing));
+    }
+
+
+    public async Task<Result<SellerListingResponseDto>>
+    ArchiveAsync(
+        Guid sellerId,
+        Guid listingId,
+        ArchiveSellerListingRequestDto? request,
+        CancellationToken cancellationToken = default)
+    {
+        var errors = new List<Error>();
+
+        ValidateListingIds(
+            sellerId,
+            listingId,
+            errors);
+
+        if (request is null)
+        {
+            errors.Add(
+                SellerListingErrors.ArchiveRequestRequired);
+        }
+        else
+        {
+            ValidateRowVersion(
+                request.RowVersion,
+                errors);
+        }
+
+        if (errors.Count > 0)
+        {
+            return Result<SellerListingResponseDto>.Failure(
+                errors);
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var listing = await repository.GetTrackedAsync(
+            sellerId,
+            listingId,
+            cancellationToken);
+
+        if (listing is null)
+        {
+            return Result<SellerListingResponseDto>.Failure(
+                SellerListingErrors.ListingNotFound(
+                    listingId));
+        }
+
+        // Archive is idempotent. Calling it again returns
+        // the current archived representation.
+        if (listing.Status ==
+            SellerListingStatus.Archived)
+        {
+            return Result<SellerListingResponseDto>.Success(
+                Map(listing));
+        }
+
+        var expectedRowVersion =
+            Convert.FromBase64String(
+                request!.RowVersion!.Trim());
+
+        listing.Archive();
+
+        var outcome =
+            await repository.SaveWithConcurrencyAsync(
+                listing,
+                expectedRowVersion,
+                cancellationToken);
+
+        if (outcome ==
+            SellerListingSaveOutcome.ConcurrencyConflict)
+        {
+            return Result<SellerListingResponseDto>.Failure(
+                SellerListingErrors.ConcurrencyConflict);
+        }
+
+        return Result<SellerListingResponseDto>.Success(
+            Map(listing));
+    }
+
     public async Task<Result<PagedSellerListingsResponseDto>>
     GetForSellerAsync(
         Guid sellerId,
@@ -263,6 +449,84 @@ public sealed class SellerListingService(
             Map(listing));
     }
 
+    private static void ValidateRowVersion(
+    string? rowVersion,
+    ICollection<Error> errors)
+    {
+        if (string.IsNullOrWhiteSpace(rowVersion))
+        {
+            errors.Add(
+                SellerListingErrors.RowVersionRequired);
+
+            return;
+        }
+
+        try
+        {
+            var bytes = Convert.FromBase64String(
+                rowVersion.Trim());
+
+            if (bytes.Length != 8)
+            {
+                errors.Add(
+                    SellerListingErrors.RowVersionInvalid);
+            }
+        }
+        catch (FormatException)
+        {
+            errors.Add(
+                SellerListingErrors.RowVersionInvalid);
+        }
+    }
+
+
+    private static SellerListingResponseDto Map(
+    SellerListing listing)
+    {
+        return new SellerListingResponseDto(
+            listing.Id,
+            listing.SellerId,
+            listing.ProductVariant.ProductId,
+            listing.ProductVariant.Product.Title,
+            listing.ProductVariant.Product.BrandName,
+            listing.ProductVariantId,
+            listing.ProductVariant.Name,
+            listing.ProductVariant.VariantCode,
+            listing.SellerSku,
+            listing.Price.Amount,
+            listing.Price.CurrencyCode,
+            listing.Status.ToString(),
+            Convert.ToBase64String(
+                listing.RowVersion),
+            listing.CreatedAtUtc);
+    }
+
+    private static bool CanSellerChangePrice(
+    SellerStatus status)
+    {
+        return status is
+            SellerStatus.PendingVerification or
+            SellerStatus.UnderReview or
+            SellerStatus.Rejected or
+            SellerStatus.Active;
+    }
+    private static void ValidateListingIds(
+    Guid sellerId,
+    Guid listingId,
+    ICollection<Error> errors)
+    {
+        if (sellerId == Guid.Empty)
+        {
+            errors.Add(
+                SellerListingErrors.SellerIdRequired);
+        }
+
+        if (listingId == Guid.Empty)
+        {
+            errors.Add(
+                SellerListingErrors.ListingIdRequired);
+        }
+    }
     private static SellerListingResponseDto Map(
     SellerListingReadModel listing)
     {

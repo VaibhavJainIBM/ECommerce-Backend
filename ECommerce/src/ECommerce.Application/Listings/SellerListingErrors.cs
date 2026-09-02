@@ -6,7 +6,11 @@ public static class SellerListingErrors
 {
     public const string SellerNotFoundCode =
         "listing.seller_not_found";
+    public const string ListingStateConflictCode =
+    "listing.state_conflict";
 
+    public const string ConcurrencyConflictCode =
+        "listing.concurrency_conflict";
     public const string ListingNotFoundCode =
     "listing.listing_not_found";
 
@@ -37,6 +41,43 @@ public static class SellerListingErrors
         "listing.variant_id_required",
         "Product variant ID is required.");
 
+    public static readonly Error PriceUpdateRequestRequired = new(
+    "listing.price_update_request_required",
+    "Price update details are required.");
+
+    public static readonly Error ArchiveRequestRequired = new(
+        "listing.archive_request_required",
+        "Archive details are required.");
+
+    public static readonly Error RowVersionRequired = new(
+        "listing.row_version_required",
+        "Row version is required.");
+
+    public static readonly Error RowVersionInvalid = new(
+        "listing.row_version_invalid",
+        "Row version must be a valid Base64-encoded " +
+        "SQL Server rowversion.");
+
+    public static Error PriceChangeNotAllowed(string status)
+    {
+        return new Error(
+            ListingStateConflictCode,
+            $"A listing with status '{status}' " +
+            "cannot change price.");
+    }
+
+    public static Error SellerCannotChangePrice(string status)
+    {
+        return new Error(
+            SellerUnavailableCode,
+            $"A seller with status '{status}' " +
+            "cannot change listing prices.");
+    }
+
+    public static readonly Error ConcurrencyConflict = new(
+        ConcurrencyConflictCode,
+        "The listing was changed by another request. " +
+        "Reload it and try again using the latest row version.");
     public static readonly Error SellerSkuRequired = new(
         "listing.seller_sku_required",
         "Seller SKU is required.");

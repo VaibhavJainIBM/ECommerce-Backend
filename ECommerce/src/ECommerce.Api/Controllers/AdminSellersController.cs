@@ -1,24 +1,23 @@
 ﻿using ECommerce.Application.Authorization;
-using ECommerce.Application.Catalog;
-using ECommerce.Application.Catalog.Dtos;
 using ECommerce.Application.Common;
+using ECommerce.Application.Sellers;
+using ECommerce.Application.Sellers.Dtos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ECommerce.Api.Controllers;
 
-[Authorize(
-    Roles = PlatformRoleNames.PlatformAdmin)]
+[Authorize(Roles = PlatformRoleNames.PlatformAdmin)]
 [ApiController]
-[Route("api/admin/catalog/products")]
-public sealed class AdminCatalogController(
-    IAdminCatalogService catalogService)
+[Route("api/admin/sellers")]
+public sealed class AdminSellersController(
+    ISellerLifecycleService lifecycleService)
     : ControllerBase
 {
-    [HttpPost]
+    [HttpPost("{sellerId:guid}/approve")]
     [ProducesResponseType(
-        typeof(CreateProductResponseDto),
-        StatusCodes.Status201Created)]
+        typeof(SellerLifecycleResponseDto),
+        StatusCodes.Status200OK)]
     [ProducesResponseType(
         typeof(ValidationProblemDetails),
         StatusCodes.Status400BadRequest)]
@@ -30,49 +29,17 @@ public sealed class AdminCatalogController(
         StatusCodes.Status403Forbidden)]
     [ProducesResponseType(
         typeof(ProblemDetails),
+        StatusCodes.Status404NotFound)]
+    [ProducesResponseType(
+        typeof(ProblemDetails),
         StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<CreateProductResponseDto>>
-        CreateProductAsync(
-            [FromBody] CreateProductRequestDto? request,
+    public async Task<ActionResult<SellerLifecycleResponseDto>>
+        ApproveAsync(
+            Guid sellerId,
             CancellationToken cancellationToken)
     {
-        var result = await catalogService.CreateProductAsync(
-            request,
-            cancellationToken);
-
-        if (result.IsFailure)
-        {
-            return ToProblem(result.Errors);
-        }
-
-        return StatusCode(
-            StatusCodes.Status201Created,
-            result.Value!);
-    }
-
-    [HttpPost("{productId:guid}/activate")]
-    [ProducesResponseType(
-    typeof(CreateProductResponseDto),
-    StatusCodes.Status200OK)]
-    [ProducesResponseType(
-    typeof(ProblemDetails),
-    StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(
-    typeof(ProblemDetails),
-    StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(
-    typeof(ProblemDetails),
-    StatusCodes.Status404NotFound)]
-    [ProducesResponseType(
-    typeof(ProblemDetails),
-    StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<CreateProductResponseDto>>
-    ActivateProductAsync(
-        Guid productId,
-        CancellationToken cancellationToken)
-    {
-        var result = await catalogService.ActivateProductAsync(
-            productId,
+        var result = await lifecycleService.ApproveAsync(
+            sellerId,
             cancellationToken);
 
         if (result.IsFailure)
@@ -84,46 +51,35 @@ public sealed class AdminCatalogController(
     }
 
     private ActionResult ToProblem(
-    IReadOnlyCollection<Error> errors)
+        IReadOnlyCollection<Error> errors)
     {
         if (errors.Count == 0)
         {
             throw new InvalidOperationException(
-                "A failed catalog result contained no errors.");
+                "A failed seller lifecycle result " +
+                "contained no errors.");
         }
 
-        var notFound = errors.FirstOrDefault(error =>
-            string.Equals(
-                error.Code,
-                CatalogErrors.ProductNotFoundCode,
-                StringComparison.Ordinal));
+        var error = errors.First();
 
-        if (notFound is not null)
+        if (error.Code ==
+            SellerLifecycleErrors.SellerNotFoundCode)
         {
             return ApiProblem(
                 StatusCodes.Status404NotFound,
-                "Catalog product not found.",
-                notFound.Description,
-                notFound.Code);
+                "Seller not found.",
+                error.Description,
+                error.Code);
         }
 
-        var conflict = errors.FirstOrDefault(error =>
-            string.Equals(
-                error.Code,
-                CatalogErrors.GtinConflictCode,
-                StringComparison.Ordinal) ||
-            string.Equals(
-                error.Code,
-                CatalogErrors.ActivationConflictCode,
-                StringComparison.Ordinal));
-
-        if (conflict is not null)
+        if (error.Code ==
+            SellerLifecycleErrors.StateConflictCode)
         {
             return ApiProblem(
                 StatusCodes.Status409Conflict,
-                "Catalog conflict.",
-                conflict.Description,
-                conflict.Code);
+                "Seller state conflict.",
+                error.Description,
+                error.Code);
         }
 
         return ValidationProblemResponse(errors);

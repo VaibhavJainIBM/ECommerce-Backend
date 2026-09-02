@@ -44,6 +44,68 @@ public sealed class SellerListingRepository(
             .SingleOrDefaultAsync(cancellationToken);
     }
 
+    public async Task<SellerListing?> GetTrackedAsync(
+    Guid sellerId,
+    Guid listingId,
+    CancellationToken cancellationToken = default)
+    {
+        return await dbContext.SellerListings
+            .Include(listing =>
+                listing.ProductVariant)
+            .ThenInclude(variant =>
+                variant.Product)
+            .SingleOrDefaultAsync(
+                listing =>
+                    listing.SellerId == sellerId &&
+                    listing.Id == listingId,
+                cancellationToken);
+    }
+
+    public async Task<SellerListingSaveOutcome>
+    SaveWithConcurrencyAsync(
+        SellerListing listing,
+        byte[] expectedRowVersion,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(listing);
+
+        ArgumentNullException.ThrowIfNull(
+            expectedRowVersion);
+
+        if (expectedRowVersion.Length != 8)
+        {
+            throw new ArgumentException(
+                "SQL Server rowversion must contain 8 bytes.",
+                nameof(expectedRowVersion));
+        }
+
+        var entry = dbContext.Entry(listing);
+
+        if (entry.State == EntityState.Detached)
+        {
+            throw new InvalidOperationException(
+                "The listing must be tracked before saving.");
+        }
+
+        entry.Property(item => item.RowVersion)
+            .OriginalValue = expectedRowVersion;
+
+        try
+        {
+            await dbContext.SaveChangesAsync(
+                cancellationToken);
+
+            return SellerListingSaveOutcome.Saved;
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            dbContext.ChangeTracker.Clear();
+
+            return SellerListingSaveOutcome
+                .ConcurrencyConflict;
+        }
+    }
+
     public async Task<SellerListingPage>
     GetForSellerAsync(
         Guid sellerId,

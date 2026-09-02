@@ -90,10 +90,30 @@ public sealed class SellerListing : AuditableEntity
     public SellerListingStatus Status { get; private set; }
 
     public byte[] RowVersion { get; private set; }
-        = Array.Empty<byte>();
+    = Array.Empty<byte>();
+
+    public bool CanChangePrice =>
+        Status is
+            SellerListingStatus.Draft or
+            SellerListingStatus.Rejected or
+            SellerListingStatus.Paused or
+            SellerListingStatus.Active;
+
+    public ICollection<InventoryItem> InventoryItems
+    {
+        get;
+        private set;
+    } = new List<InventoryItem>();
 
     public void ChangePrice(Money price)
     {
+        if (!CanChangePrice)
+        {
+            throw new InvalidOperationException(
+                $"A listing with status '{Status}' " +
+                "cannot change price.");
+        }
+
         ValidateListingPrice(price);
 
         Price = price;

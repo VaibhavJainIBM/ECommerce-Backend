@@ -29,4 +29,16 @@ public interface ISellerListingRepository
         Guid sellerId,
         Guid listingId,
         CancellationToken cancellationToken = default);
+
+    Task<SellerListing?> GetTrackedAsync(
+    Guid sellerId,
+    Guid listingId,
+    CancellationToken cancellationToken = default);
+
+    Task<SellerListingSaveOutcome> SaveWithConcurrencyAsync(
+        SellerListing listing,
+        byte[] expectedRowVersion,
+        CancellationToken cancellationToken = default);
+
+
 }

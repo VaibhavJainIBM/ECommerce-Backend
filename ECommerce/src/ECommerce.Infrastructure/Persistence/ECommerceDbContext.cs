@@ -40,6 +40,8 @@ public sealed class ECommerceDbContext(
 
     public DbSet<SellerListing> SellerListings =>
         Set<SellerListing>();
+    public DbSet<InventoryItem> InventoryItems =>
+    Set<InventoryItem>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
