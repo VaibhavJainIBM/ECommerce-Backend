@@ -2,9 +2,14 @@
 using ECommerce.Application.Inventory;
 using ECommerce.Application.Inventory.Dtos;
 using Microsoft.AspNetCore.Mvc;
+using ECommerce.Api.Authorization;
+using Microsoft.AspNetCore.Authorization;
+
 
 namespace ECommerce.Api.Controllers;
 
+
+[Authorize(Policy = SellerPolicies.Owner)]
 [ApiController]
 [Route("api/sellers/{sellerId:guid}/inventory")]
 public sealed class InventoryController(

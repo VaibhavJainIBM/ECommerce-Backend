@@ -41,6 +41,28 @@ public static class SellerListingErrors
         "listing.variant_id_required",
         "Product variant ID is required.");
 
+
+    public static readonly Error StatusChangeRequestRequired = new(
+    "listing.status_change_request_required",
+    "Listing status-change details are required.");
+
+    public static Error StatusChangeNotAllowed(
+        string action,
+        string status)
+    {
+        return new Error(
+            ListingStateConflictCode,
+            $"A listing with status '{status}' cannot be {action}.");
+    }
+
+    public static Error SellerCannotPublish(string status)
+    {
+        return new Error(
+            SellerUnavailableCode,
+            $"A seller with status '{status}' cannot publish listings.");
+    }
+
+
     public static readonly Error PriceUpdateRequestRequired = new(
     "listing.price_update_request_required",
     "Price update details are required.");

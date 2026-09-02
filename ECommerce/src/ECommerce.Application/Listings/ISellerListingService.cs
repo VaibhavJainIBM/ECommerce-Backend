@@ -36,4 +36,19 @@ public interface ISellerListingService
             ArchiveSellerListingRequestDto? request,
             CancellationToken cancellationToken = default);
 
+    Task<Result<SellerListingResponseDto>>
+    SubmitForReviewAsync(
+        Guid sellerId,
+        Guid listingId,
+        ChangeSellerListingStatusRequestDto? request,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<SellerListingResponseDto>>
+        ApproveAsync(
+            Guid sellerId,
+            Guid listingId,
+            ChangeSellerListingStatusRequestDto? request,
+            CancellationToken cancellationToken = default);
+
+
 }

@@ -5,6 +5,7 @@ using ECommerce.Application.Catalog;
 using ECommerce.Application.Listings;
 using ECommerce.Application.Warehouses;
 using ECommerce.Application.Inventory;
+using ECommerce.Application.Storefront;
 
 namespace ECommerce.Application;
 
@@ -44,6 +45,10 @@ public static class DependencyInjection
         services.AddScoped<
             IInventoryService,
             InventoryService>();
+
+        services.AddScoped<
+            IStorefrontService,
+            StorefrontService>();
 
         return services;
     }

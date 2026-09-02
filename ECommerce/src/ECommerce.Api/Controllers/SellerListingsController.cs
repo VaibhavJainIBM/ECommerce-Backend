@@ -172,6 +172,31 @@ public sealed class SellerListingsController(
         return Ok(result.Value!);
     }
 
+
+    [HttpPost("{listingId:guid}/submit-for-review")]
+    public async Task<ActionResult<SellerListingResponseDto>>
+    SubmitForReviewAsync(
+        Guid sellerId,
+        Guid listingId,
+        [FromBody]
+        ChangeSellerListingStatusRequestDto? request,
+        CancellationToken cancellationToken)
+    {
+        var result =
+            await listingService.SubmitForReviewAsync(
+                sellerId,
+                listingId,
+                request,
+                cancellationToken);
+
+        if (result.IsFailure)
+        {
+            return ToProblem(result.Errors);
+        }
+
+        return Ok(result.Value!);
+    }
+
     [HttpGet("{listingId:guid}")]
     [ProducesResponseType(
     typeof(SellerListingResponseDto),

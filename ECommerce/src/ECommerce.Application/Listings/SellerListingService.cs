@@ -120,6 +120,195 @@ public sealed class SellerListingService(
             response);
     }
 
+
+    public async Task<Result<SellerListingResponseDto>>
+    SubmitForReviewAsync(
+        Guid sellerId,
+        Guid listingId,
+        ChangeSellerListingStatusRequestDto? request,
+        CancellationToken cancellationToken = default)
+    {
+        var errors = new List<Error>();
+
+        ValidateListingIds(
+            sellerId,
+            listingId,
+            errors);
+
+        if (request is null)
+        {
+            errors.Add(
+                SellerListingErrors.StatusChangeRequestRequired);
+        }
+        else
+        {
+            ValidateRowVersion(
+                request.RowVersion,
+                errors);
+        }
+
+        if (errors.Count > 0)
+        {
+            return Result<SellerListingResponseDto>.Failure(
+                errors);
+        }
+
+        var sellerStatus =
+            await repository.GetSellerStatusAsync(
+                sellerId,
+                cancellationToken);
+
+        if (!sellerStatus.HasValue)
+        {
+            return Result<SellerListingResponseDto>.Failure(
+                SellerListingErrors.SellerNotFound);
+        }
+
+        if (sellerStatus.Value != SellerStatus.Active)
+        {
+            return Result<SellerListingResponseDto>.Failure(
+                SellerListingErrors.SellerCannotPublish(
+                    sellerStatus.Value.ToString()));
+        }
+
+        var listing = await repository.GetTrackedAsync(
+            sellerId,
+            listingId,
+            cancellationToken);
+
+        if (listing is null)
+        {
+            return Result<SellerListingResponseDto>.Failure(
+                SellerListingErrors.ListingNotFound(listingId));
+        }
+
+        if (listing.Status is not
+            (SellerListingStatus.Draft or
+             SellerListingStatus.Rejected))
+        {
+            return Result<SellerListingResponseDto>.Failure(
+                SellerListingErrors.StatusChangeNotAllowed(
+                    "submitted for review",
+                    listing.Status.ToString()));
+        }
+
+        var expectedRowVersion =
+            Convert.FromBase64String(
+                request!.RowVersion!.Trim());
+
+        listing.SubmitForReview();
+
+        var outcome =
+            await repository.SaveWithConcurrencyAsync(
+                listing,
+                expectedRowVersion,
+                cancellationToken);
+
+        if (outcome ==
+            SellerListingSaveOutcome.ConcurrencyConflict)
+        {
+            return Result<SellerListingResponseDto>.Failure(
+                SellerListingErrors.ConcurrencyConflict);
+        }
+
+        return Result<SellerListingResponseDto>.Success(
+            Map(listing));
+    }
+
+    public async Task<Result<SellerListingResponseDto>>
+        ApproveAsync(
+            Guid sellerId,
+            Guid listingId,
+            ChangeSellerListingStatusRequestDto? request,
+            CancellationToken cancellationToken = default)
+    {
+        var errors = new List<Error>();
+
+        ValidateListingIds(
+            sellerId,
+            listingId,
+            errors);
+
+        if (request is null)
+        {
+            errors.Add(
+                SellerListingErrors.StatusChangeRequestRequired);
+        }
+        else
+        {
+            ValidateRowVersion(
+                request.RowVersion,
+                errors);
+        }
+
+        if (errors.Count > 0)
+        {
+            return Result<SellerListingResponseDto>.Failure(
+                errors);
+        }
+
+        var sellerStatus =
+            await repository.GetSellerStatusAsync(
+                sellerId,
+                cancellationToken);
+
+        if (!sellerStatus.HasValue)
+        {
+            return Result<SellerListingResponseDto>.Failure(
+                SellerListingErrors.SellerNotFound);
+        }
+
+        if (sellerStatus.Value != SellerStatus.Active)
+        {
+            return Result<SellerListingResponseDto>.Failure(
+                SellerListingErrors.SellerCannotPublish(
+                    sellerStatus.Value.ToString()));
+        }
+
+        var listing = await repository.GetTrackedAsync(
+            sellerId,
+            listingId,
+            cancellationToken);
+
+        if (listing is null)
+        {
+            return Result<SellerListingResponseDto>.Failure(
+                SellerListingErrors.ListingNotFound(listingId));
+        }
+
+        if (listing.Status !=
+            SellerListingStatus.PendingReview)
+        {
+            return Result<SellerListingResponseDto>.Failure(
+                SellerListingErrors.StatusChangeNotAllowed(
+                    "approved",
+                    listing.Status.ToString()));
+        }
+
+        var expectedRowVersion =
+            Convert.FromBase64String(
+                request!.RowVersion!.Trim());
+
+        listing.Approve();
+
+        var outcome =
+            await repository.SaveWithConcurrencyAsync(
+                listing,
+                expectedRowVersion,
+                cancellationToken);
+
+        if (outcome ==
+            SellerListingSaveOutcome.ConcurrencyConflict)
+        {
+            return Result<SellerListingResponseDto>.Failure(
+                SellerListingErrors.ConcurrencyConflict);
+        }
+
+        return Result<SellerListingResponseDto>.Success(
+            Map(listing));
+    }
+
+
     public async Task<Result<SellerListingResponseDto>>
     UpdatePriceAsync(
         Guid sellerId,
