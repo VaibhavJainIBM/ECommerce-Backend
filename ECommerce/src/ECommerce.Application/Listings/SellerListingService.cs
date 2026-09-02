@@ -120,6 +120,170 @@ public sealed class SellerListingService(
             response);
     }
 
+    public async Task<Result<PagedSellerListingsResponseDto>>
+    GetForSellerAsync(
+        Guid sellerId,
+        SellerListingQueryDto? query,
+        CancellationToken cancellationToken = default)
+    {
+        var errors = new List<Error>();
+
+        if (sellerId == Guid.Empty)
+        {
+            errors.Add(
+                SellerListingErrors.SellerIdRequired);
+        }
+
+        var page = query?.Page ?? 1;
+        var pageSize = query?.PageSize ?? 20;
+
+        if (page < 1)
+        {
+            errors.Add(
+                SellerListingErrors.PageInvalid);
+        }
+
+        if (pageSize is < 1 or > 100)
+        {
+            errors.Add(
+                SellerListingErrors.PageSizeInvalid);
+        }
+
+        SellerListingStatus? status = null;
+
+        if (!string.IsNullOrWhiteSpace(query?.Status))
+        {
+            var suppliedStatus = query.Status.Trim();
+
+            if (!Enum.TryParse<SellerListingStatus>(
+                    suppliedStatus,
+                    ignoreCase: true,
+                    out var parsedStatus) ||
+                !Enum.IsDefined(
+                    typeof(SellerListingStatus),
+                    parsedStatus))
+            {
+                errors.Add(
+                    SellerListingErrors.InvalidStatus(
+                        suppliedStatus));
+            }
+            else
+            {
+                status = parsedStatus;
+            }
+        }
+
+        var skipAsLong =
+            ((long)page - 1) * pageSize;
+
+        if (skipAsLong > int.MaxValue)
+        {
+            errors.Add(
+                SellerListingErrors.PaginationTooDeep);
+        }
+
+        if (errors.Count > 0)
+        {
+            return Result<PagedSellerListingsResponseDto>
+                .Failure(errors);
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var result = await repository.GetForSellerAsync(
+            sellerId,
+            status,
+            (int)skipAsLong,
+            pageSize,
+            cancellationToken);
+
+        var items = result.Items
+            .Select(Map)
+            .ToArray();
+
+        var totalPages = result.TotalCount == 0
+            ? 0
+            : (int)Math.Ceiling(
+                result.TotalCount /
+                (double)pageSize);
+
+        var response =
+            new PagedSellerListingsResponseDto(
+                items,
+                page,
+                pageSize,
+                result.TotalCount,
+                totalPages);
+
+        return Result<PagedSellerListingsResponseDto>
+            .Success(response);
+    }
+
+    public async Task<Result<SellerListingResponseDto>>
+    GetByIdAsync(
+        Guid sellerId,
+        Guid listingId,
+        CancellationToken cancellationToken = default)
+    {
+        var errors = new List<Error>();
+
+        if (sellerId == Guid.Empty)
+        {
+            errors.Add(
+                SellerListingErrors.SellerIdRequired);
+        }
+
+        if (listingId == Guid.Empty)
+        {
+            errors.Add(
+                SellerListingErrors.ListingIdRequired);
+        }
+
+        if (errors.Count > 0)
+        {
+            return Result<SellerListingResponseDto>.Failure(
+                errors);
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var listing = await repository.FindByIdAsync(
+            sellerId,
+            listingId,
+            cancellationToken);
+
+        if (listing is null)
+        {
+            return Result<SellerListingResponseDto>.Failure(
+                SellerListingErrors.ListingNotFound(
+                    listingId));
+        }
+
+        return Result<SellerListingResponseDto>.Success(
+            Map(listing));
+    }
+
+    private static SellerListingResponseDto Map(
+    SellerListingReadModel listing)
+    {
+        return new SellerListingResponseDto(
+            listing.ListingId,
+            listing.SellerId,
+            listing.ProductId,
+            listing.ProductTitle,
+            listing.BrandName,
+            listing.ProductVariantId,
+            listing.VariantName,
+            listing.VariantCode,
+            listing.SellerSku,
+            listing.PriceAmount,
+            listing.CurrencyCode,
+            listing.Status.ToString(),
+            Convert.ToBase64String(
+                listing.RowVersion),
+            listing.CreatedAtUtc);
+    }
+
     private static bool CanCreateDraftListing(
         SellerStatus status)
     {

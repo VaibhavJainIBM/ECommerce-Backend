@@ -9,4 +9,16 @@ public interface ISellerListingService
         Guid sellerId,
         CreateSellerListingRequestDto? request,
         CancellationToken cancellationToken = default);
+
+    Task<Result<PagedSellerListingsResponseDto>>
+    GetForSellerAsync(
+        Guid sellerId,
+        SellerListingQueryDto? query,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<SellerListingResponseDto>>
+        GetByIdAsync(
+            Guid sellerId,
+            Guid listingId,
+            CancellationToken cancellationToken = default);
 }

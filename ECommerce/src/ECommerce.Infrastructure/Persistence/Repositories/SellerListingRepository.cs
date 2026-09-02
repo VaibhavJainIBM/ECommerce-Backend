@@ -44,6 +44,107 @@ public sealed class SellerListingRepository(
             .SingleOrDefaultAsync(cancellationToken);
     }
 
+    public async Task<SellerListingPage>
+    GetForSellerAsync(
+        Guid sellerId,
+        SellerListingStatus? status,
+        int skip,
+        int take,
+        CancellationToken cancellationToken = default)
+    {
+        if (sellerId == Guid.Empty)
+        {
+            throw new ArgumentException(
+                "Seller ID is required.",
+                nameof(sellerId));
+        }
+
+        if (skip < 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(skip));
+        }
+
+        if (take is < 1 or > 100)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(take));
+        }
+
+        var query = dbContext.SellerListings
+            .AsNoTracking()
+            .Where(listing =>
+                listing.SellerId == sellerId);
+
+        if (status.HasValue)
+        {
+            query = query.Where(listing =>
+                listing.Status == status.Value);
+        }
+
+        var totalCount = await query.CountAsync(
+            cancellationToken);
+
+        var items = await query
+            .OrderByDescending(listing =>
+                listing.CreatedAtUtc)
+            .ThenByDescending(listing =>
+                listing.Id)
+            .Skip(skip)
+            .Take(take)
+            .Select(listing =>
+                new SellerListingReadModel(
+                    listing.Id,
+                    listing.SellerId,
+                    listing.ProductVariant.ProductId,
+                    listing.ProductVariant.Product.Title,
+                    listing.ProductVariant.Product.BrandName,
+                    listing.ProductVariantId,
+                    listing.ProductVariant.Name,
+                    listing.ProductVariant.VariantCode,
+                    listing.SellerSku,
+                    listing.Price.Amount,
+                    listing.Price.CurrencyCode,
+                    listing.Status,
+                    listing.RowVersion,
+                    listing.CreatedAtUtc))
+            .ToArrayAsync(cancellationToken);
+
+        return new SellerListingPage(
+            items,
+            totalCount);
+    }
+
+    public async Task<SellerListingReadModel?>
+    FindByIdAsync(
+        Guid sellerId,
+        Guid listingId,
+        CancellationToken cancellationToken = default)
+    {
+        return await dbContext.SellerListings
+            .AsNoTracking()
+            .Where(listing =>
+                listing.SellerId == sellerId &&
+                listing.Id == listingId)
+            .Select(listing =>
+                new SellerListingReadModel(
+                    listing.Id,
+                    listing.SellerId,
+                    listing.ProductVariant.ProductId,
+                    listing.ProductVariant.Product.Title,
+                    listing.ProductVariant.Product.BrandName,
+                    listing.ProductVariantId,
+                    listing.ProductVariant.Name,
+                    listing.ProductVariant.VariantCode,
+                    listing.SellerSku,
+                    listing.Price.Amount,
+                    listing.Price.CurrencyCode,
+                    listing.Status,
+                    listing.RowVersion,
+                    listing.CreatedAtUtc))
+            .SingleOrDefaultAsync(cancellationToken);
+    }
+
     public async Task<SellerListingCreateOutcome>
         TryCreateAsync(
             SellerListing listing,

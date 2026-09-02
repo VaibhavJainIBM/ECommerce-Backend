@@ -54,6 +54,74 @@ public sealed class SellerListingsController(
             result.Value!);
     }
 
+    [HttpGet]
+    [ProducesResponseType(
+    typeof(PagedSellerListingsResponseDto),
+    StatusCodes.Status200OK)]
+    [ProducesResponseType(
+    typeof(ValidationProblemDetails),
+    StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(
+    typeof(ProblemDetails),
+    StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(
+    typeof(ProblemDetails),
+    StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(
+    typeof(ProblemDetails),
+    StatusCodes.Status404NotFound)]
+    public async Task<
+    ActionResult<PagedSellerListingsResponseDto>>
+    GetForSellerAsync(
+        Guid sellerId,
+        [FromQuery] SellerListingQueryDto? query,
+        CancellationToken cancellationToken)
+    {
+        var result = await listingService.GetForSellerAsync(
+            sellerId,
+            query,
+            cancellationToken);
+
+        if (result.IsFailure)
+        {
+            return ToProblem(result.Errors);
+        }
+
+        return Ok(result.Value!);
+    }
+
+    [HttpGet("{listingId:guid}")]
+    [ProducesResponseType(
+    typeof(SellerListingResponseDto),
+    StatusCodes.Status200OK)]
+    [ProducesResponseType(
+    typeof(ProblemDetails),
+    StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(
+    typeof(ProblemDetails),
+    StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(
+    typeof(ProblemDetails),
+    StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<SellerListingResponseDto>>
+    GetByIdAsync(
+        Guid sellerId,
+        Guid listingId,
+        CancellationToken cancellationToken)
+    {
+        var result = await listingService.GetByIdAsync(
+            sellerId,
+            listingId,
+            cancellationToken);
+
+        if (result.IsFailure)
+        {
+            return ToProblem(result.Errors);
+        }
+
+        return Ok(result.Value!);
+    }
+
     private ActionResult ToProblem(
         IReadOnlyCollection<Error> errors)
     {
@@ -68,7 +136,9 @@ public sealed class SellerListingsController(
         if (error.Code ==
                 SellerListingErrors.SellerNotFoundCode ||
             error.Code ==
-                SellerListingErrors.VariantNotFoundCode)
+                SellerListingErrors.VariantNotFoundCode ||
+            error.Code ==
+                SellerListingErrors.ListingNotFoundCode)
         {
             return ApiProblem(
                 StatusCodes.Status404NotFound,

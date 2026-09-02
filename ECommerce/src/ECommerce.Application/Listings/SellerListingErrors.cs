@@ -7,6 +7,9 @@ public static class SellerListingErrors
     public const string SellerNotFoundCode =
         "listing.seller_not_found";
 
+    public const string ListingNotFoundCode =
+    "listing.listing_not_found";
+
     public const string VariantNotFoundCode =
         "listing.variant_not_found";
 
@@ -71,6 +74,35 @@ public static class SellerListingErrors
         SellerNotFoundCode,
         "The seller was not found.");
 
+    public static readonly Error ListingIdRequired = new(
+    "listing.listing_id_required",
+    "Listing ID is required.");
+
+    public static readonly Error PageInvalid = new(
+        "listing.page_invalid",
+        "Page must be greater than zero.");
+
+    public static readonly Error PageSizeInvalid = new(
+        "listing.page_size_invalid",
+        "Page size must be between 1 and 100.");
+
+    public static readonly Error PaginationTooDeep = new(
+        "listing.pagination_too_deep",
+        "The requested page is too large.");
+
+    public static Error InvalidStatus(string status)
+    {
+        return new Error(
+            "listing.invalid_status",
+            $"'{status}' is not a valid listing status.");
+    }
+
+    public static Error ListingNotFound(Guid listingId)
+    {
+        return new Error(
+            ListingNotFoundCode,
+            $"Listing '{listingId}' was not found.");
+    }
     public static readonly Error VariantNotFound = new(
         VariantNotFoundCode,
         "The product variant was not found.");
