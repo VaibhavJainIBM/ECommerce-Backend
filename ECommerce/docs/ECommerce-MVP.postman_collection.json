@@ -1,0 +1,721 @@
+{
+  "info": {
+    "name": "ECommerce MVP - Storefront, Cart and Orders",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Local MVP demo. Tokens are deliberately blank. Set customerToken and sellerOwnerToken locally. Checkout creates PendingPayment with a 30-minute stock reservation, not a payment. The Set cart item request prepares a NEW checkout key and frozen body. The retry must reuse both unchanged. Payments are not implemented."
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://localhost:7042",
+      "type": "string"
+    },
+    {
+      "key": "customerToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "sellerOwnerToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "listingId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "sellerId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "quantity",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "cartRowVersion",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "expectedTotalAmount",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "currencyCode",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "idempotencyKey",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "checkoutBody",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "orderId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01 Browse storefront",
+      "request": {
+        "method": "GET",
+        "auth": {
+          "type": "noauth"
+        },
+        "header": [],
+        "url": "{{baseUrl}}/api/storefront/listings?page=1&pageSize=20",
+        "description": "Public browse. Automatically selects the first active, in-stock listing. Change listingId/sellerId locally to select another."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "if (pm.response.code === 200) {",
+              "  const page = pm.response.json();",
+              "  pm.test('At least one purchasable listing', () => pm.expect(page.items.length).to.be.greaterThan(0));",
+              "  if (page.items.length) {",
+              "    pm.collectionVariables.set('listingId', page.items[0].listingId);",
+              "    pm.collectionVariables.set('sellerId', page.items[0].sellerId);",
+              "  }",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 Read public listing",
+      "request": {
+        "method": "GET",
+        "auth": {
+          "type": "noauth"
+        },
+        "header": [],
+        "url": "{{baseUrl}}/api/storefront/listings/{{listingId}}",
+        "description": ""
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 Set cart item - prepare NEW checkout",
+      "request": {
+        "method": "PUT",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{customerToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"quantity\": {{quantity}}\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/api/cart/items/{{listingId}}",
+        "description": "Sets the quantity; does not increment. Saves latest cart version/total/currency and freezes a new checkout body with a new idempotency key. Do not rerun between checkout and its exact retry."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "if (pm.response.code === 200) {",
+              "  const cart = pm.response.json();",
+              "  pm.collectionVariables.set('cartRowVersion', cart.rowVersion || '');",
+              "  pm.collectionVariables.set('expectedTotalAmount', String(cart.totalAmount));",
+              "  pm.collectionVariables.set('currencyCode', cart.currencyCode || '');",
+              "}",
+              "if (pm.response.code === 200) {",
+              "  const cart = pm.response.json();",
+              "  pm.test('Cart is checkout-ready', () => pm.expect(cart.isCheckoutReady).to.eql(true));",
+              "  pm.collectionVariables.set('idempotencyKey', pm.variables.replaceIn('{{$guid}}'));",
+              "  pm.collectionVariables.set('checkoutBody', JSON.stringify({",
+              "    cartRowVersion: cart.rowVersion, expectedTotalAmount: cart.totalAmount, currencyCode: cart.currencyCode,",
+              "    recipientName: 'Demo Customer', phone: '9999999999',",
+              "    shippingAddress: {line1:'1 Main Road',line2:null,city:'Delhi',stateOrProvince:'Delhi',postalCode:'110001',countryCode:'IN'}",
+              "  }));",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 Read cart",
+      "request": {
+        "method": "GET",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{customerToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [],
+        "url": "{{baseUrl}}/api/cart",
+        "description": "Returns server-calculated current totals. Does not replace the frozen checkout body, so retries remain safe after successful checkout clears the cart."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "if (pm.response.code === 200) {",
+              "  const cart = pm.response.json();",
+              "  pm.collectionVariables.set('cartRowVersion', cart.rowVersion || '');",
+              "  pm.collectionVariables.set('expectedTotalAmount', String(cart.totalAmount));",
+              "  pm.collectionVariables.set('currencyCode', cart.currencyCode || '');",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 Checkout - create pending order",
+      "request": {
+        "method": "POST",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{customerToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Idempotency-Key",
+            "value": "{{idempotencyKey}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{{checkoutBody}}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/api/orders/checkout",
+        "description": "Creates order and reserves stock atomically. Server revalidates stock, statuses, current prices and cart version. This is not payment success."
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (!pm.collectionVariables.get('checkoutBody') || !pm.collectionVariables.get('idempotencyKey')) {",
+              "  throw new Error('Run Set cart item first to prepare the cart version, total and a new checkout key.');",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('New order is HTTP 201', () => pm.response.to.have.status(201));",
+              "if ([200,201].includes(pm.response.code)) {",
+              "  const order = pm.response.json();",
+              "  pm.collectionVariables.set('orderId', order.orderId);",
+              "  pm.test('Pending payment only', () => pm.expect(order.status).to.eql('PendingPayment'));",
+              "  pm.test('Order has lines', () => pm.expect(order.items.length).to.be.greaterThan(0));",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 Retry EXACT checkout - same key and body",
+      "request": {
+        "method": "POST",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{customerToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Idempotency-Key",
+            "value": "{{idempotencyKey}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{{checkoutBody}}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/api/orders/checkout",
+        "description": "Keep original key and frozen body. Reusing the key with a different payload should return 409. No stock should be reserved twice."
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (!pm.collectionVariables.get('checkoutBody') || !pm.collectionVariables.get('idempotencyKey')) {",
+              "  throw new Error('Run Set cart item first to prepare the cart version, total and a new checkout key.');",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "if (pm.response.code === 200) {",
+              "  const order = pm.response.json();",
+              "  pm.test('Same order, no duplicate reservation', () => pm.expect(order.orderId).to.eql(pm.collectionVariables.get('orderId')));",
+              "  pm.test('Replay header', () => pm.expect(pm.response.headers.get('Idempotency-Replayed')).to.eql('true'));",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 My order history",
+      "request": {
+        "method": "GET",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{customerToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [],
+        "url": "{{baseUrl}}/api/orders?page=1&pageSize=20",
+        "description": ""
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "08 My order details",
+      "request": {
+        "method": "GET",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{customerToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [],
+        "url": "{{baseUrl}}/api/orders/{{orderId}}",
+        "description": ""
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "if (pm.response.code === 200) pm.test('Correct order', () => pm.expect(pm.response.json().orderId).to.eql(pm.collectionVariables.get('orderId')));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "09 Seller order view - Owner token",
+      "request": {
+        "method": "GET",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{sellerOwnerToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [],
+        "url": "{{baseUrl}}/api/sellers/{{sellerId}}/orders?page=1&pageSize=20",
+        "description": "Uses sellerOwnerToken, not the customer's token. The seller policy validates membership for this seller. Other sellers' lines/subtotals are omitted."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "if (pm.response.code === 200) {",
+              "  pm.test('Only selected seller lines', () => pm.response.json().items.forEach(order => order.items.forEach(line => pm.expect(line.sellerId).to.eql(pm.collectionVariables.get('sellerId')))));",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "10 Cancel pending order - release reservation",
+      "request": {
+        "method": "POST",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{customerToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [],
+        "url": "{{baseUrl}}/api/orders/{{orderId}}/cancel",
+        "description": "No request body. Cancels only an unpaid pending order and releases its reserved inventory once."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "if (pm.response.code === 200) pm.test('Order cancelled', () => pm.expect(pm.response.json().status).to.eql('Cancelled'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "11 Retry cancel - no double release",
+      "request": {
+        "method": "POST",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{customerToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [],
+        "url": "{{baseUrl}}/api/orders/{{orderId}}/cancel",
+        "description": ""
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "12 Verify listing stock restored",
+      "request": {
+        "method": "GET",
+        "auth": {
+          "type": "noauth"
+        },
+        "header": [],
+        "url": "{{baseUrl}}/api/storefront/listings/{{listingId}}",
+        "description": ""
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "13 Verify cart empty after checkout",
+      "request": {
+        "method": "GET",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{customerToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [],
+        "url": "{{baseUrl}}/api/cart",
+        "description": ""
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "if (pm.response.code === 200) pm.test('Cart empty', () => pm.expect(pm.response.json().items).to.have.lengthOf(0));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Optional mutation and security checks",
+      "item": [
+        {
+          "name": "Remove one cart line",
+          "request": {
+            "method": "DELETE",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/cart/items/{{listingId}}",
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Clear cart",
+          "request": {
+            "method": "DELETE",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/cart",
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Anonymous cart is blocked",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/cart",
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Quantity zero is rejected",
+          "request": {
+            "method": "PUT",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"quantity\":0}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/cart/items/{{listingId}}",
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Invalid order pagination is rejected",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/orders?page=0&pageSize=101",
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

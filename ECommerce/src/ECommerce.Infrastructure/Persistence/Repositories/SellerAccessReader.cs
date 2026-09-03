@@ -20,6 +20,13 @@ public sealed class SellerAccessReader(
             return null;
         }
 
+        // A valid but unexpired JWT must not keep a disabled account's seller access alive.
+        if (!await dbContext.Users.AnyAsync(
+                user => user.Id == userId && user.IsActive, cancellationToken))
+        {
+            return null;
+        }
+
         var memberId = await dbContext.SellerMembers
             .AsNoTracking()
             .Where(member =>

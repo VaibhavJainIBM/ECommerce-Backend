@@ -249,7 +249,7 @@ public sealed class ShoppingDomainTests
     }
 
     [Fact]
-    public Order_accepts_32_character_phone_and_rejects_33()
+    public void Order_accepts_32_character_phone_and_rejects_33()
     {
         var accepted = new Order(Guid.NewGuid(), Guid.NewGuid(), new string('A', 64),
             "Customer", new string('1', 32), Address(), DateTimeOffset.UtcNow);

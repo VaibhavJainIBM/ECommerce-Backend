@@ -92,4 +92,10 @@ dotnet test '.\tests\ECommerce.UnitTests\ECommerce.UnitTests.csproj'
 dotnet test '.\tests\ECommerce.IntegrationTests\ECommerce.IntegrationTests.csproj'
 ```
 
-Unit tests do not require SQL Server. Database/API integration checks may require a configured local test database; read their output and configuration before running against non-test data.
+Unit tests do not require SQL Server. SQL integration tests explicitly skip unless `ECOMMERCE_TEST_SQLSERVER` is set. To run both suites using the API's development SQL connection without printing secrets:
+
+```powershell
+.\scripts\Test-Mvp.ps1
+```
+
+The runner loads only the local connection setting. The integration fixture replaces its database name with a unique `ECommerceMvpTests_<GUID>` name, applies migrations there, tests the real JWT/HTTP/SQL pipeline, and drops only that generated database. It never seeds or clears `ECommerceDb`. The SQL account needs permission to create and drop a temporary test database. Missing SQL permissions are test failures, not a reason to point the fixture at existing application data.

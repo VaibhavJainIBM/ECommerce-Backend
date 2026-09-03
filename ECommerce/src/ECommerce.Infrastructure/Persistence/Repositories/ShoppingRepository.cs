@@ -147,13 +147,14 @@ public sealed partial class ShoppingRepository(ECommerceDbContext dbContext)
     }
 
     // Serialize one customer's cart changes and checkout, including first-cart creation.
-    // Serializable isolation protects prices/status read during checkout; rowversion also
-    // protects stock. A competing checkout/deadlock becomes a retryable 409, never overselling.
+    // Prices/status are revalidated from the database and captured as order snapshots.
+    // ReadCommitted avoids broad range locks between unrelated carts; SQL rowversion
+    // protects every inventory update. A stale stock write rolls back the whole checkout.
     private async Task<Result<T>> InTransactionAsync<T>(
         string lockName, Func<Task<Result<T>>> operation, CancellationToken cancellationToken)
     {
         await using var transaction = await dbContext.Database.BeginTransactionAsync(
-            IsolationLevel.Serializable, cancellationToken);
+            IsolationLevel.ReadCommitted, cancellationToken);
         try
         {
             await AcquireLockAsync(lockName, cancellationToken);
