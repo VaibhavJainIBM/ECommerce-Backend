@@ -18,6 +18,7 @@ public sealed class ECommerceDbContext(
     public DbSet<Cart> Carts => Set<Cart>();
     public DbSet<CartItem> CartItems => Set<CartItem>();
     public DbSet<Order> Orders => Set<Order>();
+    public DbSet<DemoPayment> DemoPayments => Set<DemoPayment>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<OrderItemAllocation> OrderItemAllocations => Set<OrderItemAllocation>();
 

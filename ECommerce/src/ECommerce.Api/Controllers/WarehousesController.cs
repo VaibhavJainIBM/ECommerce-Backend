@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ECommerce.Api.Controllers;
 
-[Authorize(Policy = SellerPolicies.Owner)]
+[Authorize(Policy = SellerPolicies.Inventory)]
 [ApiController]
 [Route("api/sellers/{sellerId:guid}/warehouses")]
 public sealed class WarehousesController(
@@ -15,6 +15,7 @@ public sealed class WarehousesController(
     : ControllerBase
 {
     [HttpPost]
+    [Authorize(Policy = SellerPolicies.Management)]
     [ProducesResponseType(
         typeof(WarehouseResponseDto),
         StatusCodes.Status201Created)]
@@ -128,6 +129,7 @@ public sealed class WarehousesController(
     }
 
     [HttpPost("{warehouseId:guid}/activate")]
+    [Authorize(Policy = SellerPolicies.Management)]
     [ProducesResponseType(
         typeof(WarehouseResponseDto),
         StatusCodes.Status200OK)]

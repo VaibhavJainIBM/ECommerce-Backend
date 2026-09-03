@@ -9,13 +9,29 @@ using Microsoft.AspNetCore.Authorization;
 namespace ECommerce.Api.Controllers;
 
 
-[Authorize(Policy = SellerPolicies.Owner)]
+[Authorize(Policy = SellerPolicies.Inventory)]
 [ApiController]
 [Route("api/sellers/{sellerId:guid}/inventory")]
 public sealed class InventoryController(
     IInventoryService inventoryService)
     : ControllerBase
 {
+    [HttpPost("{inventoryItemId:guid}/receive")]
+    public async Task<IActionResult> Receive(Guid sellerId, Guid inventoryItemId,
+        [FromBody] UpdateInventoryQuantityRequestDto? request, CancellationToken ct)
+    {
+        var result = await inventoryService.UpdateQuantityAsync(sellerId, inventoryItemId, request, false, ct);
+        return result.IsSuccess ? Ok(result.Value) : MapErrors(result.Errors);
+    }
+
+    [HttpPost("{inventoryItemId:guid}/adjust")]
+    public async Task<IActionResult> Adjust(Guid sellerId, Guid inventoryItemId,
+        [FromBody] UpdateInventoryQuantityRequestDto? request, CancellationToken ct)
+    {
+        var result = await inventoryService.UpdateQuantityAsync(sellerId, inventoryItemId, request, true, ct);
+        return result.IsSuccess ? Ok(result.Value) : MapErrors(result.Errors);
+    }
+
     // GET: api/sellers/{sellerId}/inventory
     [HttpGet]
     public async Task<IActionResult> GetForSeller(
@@ -92,6 +108,9 @@ public sealed class InventoryController(
         IReadOnlyCollection<Error> errors)
     {
         // 404 - requested resource does not exist
+        if (errors.Any(error => error.Code == "inventory.stock_conflict"))
+            return Conflict(new { errors });
+
         if (errors.Any(error =>
                 error.Code ==
                     InventoryErrors.SellerNotFoundCode ||

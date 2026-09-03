@@ -47,7 +47,7 @@ public sealed partial class ShoppingRepository
             var lines = order.Items.Where(x => x.SellerId == sellerId).Select(MapItem).ToArray();
             return new SellerOrderResponseDto(order.Id, order.OrderNumber, order.Status.ToString(),
                 lines.Sum(x => x.LineTotal), order.CurrencyCode, order.RecipientName, order.Phone,
-                MapAddress(order), lines, order.CreatedAtUtc, order.ExpiresAtUtc);
+                MapAddress(order), lines, order.CreatedAtUtc, order.ExpiresAtUtc, order.PaymentMode);
         }).ToArray();
         return Result<PagedSellerOrdersResponseDto>.Success(new PagedSellerOrdersResponseDto(
             items, page, pageSize, count));
@@ -64,9 +64,12 @@ public sealed partial class ShoppingRepository
                 .SingleOrDefaultAsync(x => x.Id == orderId && x.CustomerId == customerId, cancellationToken);
             if (order is null)
                 return Result<OrderResponseDto>.Failure(ShoppingErrors.NotFound("The order was not found."));
+            if (order.Status is OrderStatus.Paid or OrderStatus.PartiallyShipped or OrderStatus.Shipped)
+                return Result<OrderResponseDto>.Failure(ShoppingErrors.Conflict("Paid or shipped orders cannot be cancelled by this MVP. Refunds are not implemented."));
             if (order.Status == OrderStatus.PendingPayment)
             {
                 await ReleaseAllocationsAsync(order, cancellationToken);
+                await CancelPendingPaymentsAsync(order.Id, cancellationToken);
                 var now = DateTimeOffset.UtcNow;
                 if (order.ExpiresAtUtc <= now) order.Expire(now);
                 else order.Cancel();
@@ -93,6 +96,7 @@ public sealed partial class ShoppingRepository
                 if (order is null || order.Status != OrderStatus.PendingPayment || order.ExpiresAtUtc > now)
                     return Result<bool>.Success(false);
                 await ReleaseAllocationsAsync(order, cancellationToken);
+                await CancelPendingPaymentsAsync(order.Id, cancellationToken);
                 order.Expire(now);
                 await dbContext.SaveChangesAsync(cancellationToken);
                 return Result<bool>.Success(true);
@@ -123,11 +127,12 @@ public sealed partial class ShoppingRepository
     private static OrderItemResponseDto MapItem(OrderItem item) => new(
         item.Id, item.SellerId, item.SellerDisplayName, item.SellerListingId, item.ProductVariantId,
         item.ProductTitle, item.VariantName, item.SellerSku, item.UnitPriceAmount, item.CurrencyCode,
-        item.Quantity, item.LineTotal);
+        item.Quantity, item.LineTotal, item.ShippedAtUtc);
 
     private static OrderResponseDto MapOrder(Order order) => new(
         order.Id, order.OrderNumber, order.Status.ToString(), order.TotalAmount, order.CurrencyCode,
         order.RecipientName, order.Phone, MapAddress(order),
         order.Items.OrderBy(x => x.SellerId).ThenBy(x => x.SellerListingId).Select(MapItem).ToArray(),
-        order.CreatedAtUtc, order.ExpiresAtUtc, Convert.ToBase64String(order.RowVersion));
+        order.CreatedAtUtc, order.ExpiresAtUtc, Convert.ToBase64String(order.RowVersion),
+        order.PaidAtUtc, order.PaymentMode);
 }

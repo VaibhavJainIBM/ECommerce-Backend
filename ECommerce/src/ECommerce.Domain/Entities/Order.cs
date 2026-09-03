@@ -54,6 +54,8 @@ public sealed class Order : AuditableEntity
     public decimal TotalAmount { get; private set; }
     public OrderStatus Status { get; private set; }
     public DateTimeOffset ExpiresAtUtc { get; private set; }
+    public DateTimeOffset? PaidAtUtc { get; private set; }
+    public string? PaymentMode { get; private set; }
     public byte[] RowVersion { get; private set; } = Array.Empty<byte>();
     public ICollection<OrderItem> Items { get; private set; } = new List<OrderItem>();
 
@@ -75,6 +77,29 @@ public sealed class Order : AuditableEntity
         Items.Add(item);
         CurrencyCode = total.CurrencyCode;
         TotalAmount = total.Amount;
+        MarkUpdated();
+    }
+
+    public void MarkPaid(DateTimeOffset now)
+    {
+        if (Status != OrderStatus.PendingPayment || ExpiresAtUtc <= now)
+            throw new InvalidOperationException("Only an unexpired pending order can be paid.");
+        if (Items.Count == 0 || TotalAmount <= 0)
+            throw new InvalidOperationException("An empty order cannot be paid.");
+        Status = OrderStatus.Paid;
+        PaidAtUtc = now;
+        PaymentMode = "Demo";
+        MarkUpdated();
+    }
+
+    public void RefreshShipmentStatus()
+    {
+        if (Status is not (OrderStatus.Paid or OrderStatus.PartiallyShipped))
+            throw new InvalidOperationException("Only a paid order can be shipped.");
+        if (!Items.Any(x => x.ShippedAtUtc.HasValue))
+            throw new InvalidOperationException("No order item has been shipped.");
+        Status = Items.All(x => x.ShippedAtUtc.HasValue)
+            ? OrderStatus.Shipped : OrderStatus.PartiallyShipped;
         MarkUpdated();
     }
 

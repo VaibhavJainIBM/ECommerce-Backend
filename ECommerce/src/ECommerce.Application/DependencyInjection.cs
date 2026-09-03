@@ -7,6 +7,10 @@ using ECommerce.Application.Warehouses;
 using ECommerce.Application.Inventory;
 using ECommerce.Application.Storefront;
 using ECommerce.Application.Shopping;
+using ECommerce.Application.Payments;
+using ECommerce.Application.Fulfillment;
+using ECommerce.Application.Catalog.Browsing;
+using ECommerce.Application.SellerTeams;
 
 namespace ECommerce.Application;
 
@@ -52,6 +56,10 @@ public static class DependencyInjection
             StorefrontService>();
 
         services.AddScoped<IShoppingService, ShoppingService>();
+        services.AddScoped<IPaymentService, PaymentService>();
+        services.AddScoped<IFulfillmentService, FulfillmentService>();
+        services.AddScoped<ICatalogBrowsingService, CatalogBrowsingService>();
+        services.AddScoped<ISellerTeamService, SellerTeamService>();
 
         return services;
     }

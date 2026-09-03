@@ -53,6 +53,7 @@ public sealed class OrderItem : Entity
     public string CurrencyCode { get; private set; } = string.Empty;
     public int Quantity { get; private set; }
     public decimal LineTotal { get; private set; }
+    public DateTimeOffset? ShippedAtUtc { get; private set; }
     public ICollection<OrderItemAllocation> Allocations { get; private set; }
         = new List<OrderItemAllocation>();
 
@@ -76,6 +77,17 @@ public sealed class OrderItem : Entity
             throw new InvalidOperationException("This inventory row is already allocated to the order item.");
         // Reserving inventory is coordinated transactionally by the checkout repository.
         Allocations.Add(new OrderItemAllocation(Id, item.Id, quantity));
+    }
+
+    public bool MarkShipped(DateTimeOffset now)
+    {
+        if (ShippedAtUtc.HasValue) return false;
+        if (now == default)
+            throw new ArgumentException("Shipment time is required.", nameof(now));
+        if (Allocations.Sum(x => (long)x.Quantity) != Quantity)
+            throw new InvalidOperationException("All ordered units must be allocated before shipment.");
+        ShippedAtUtc = now.ToUniversalTime();
+        return true;
     }
 
     private static string Snapshot(string value, int maximumLength, string parameterName)

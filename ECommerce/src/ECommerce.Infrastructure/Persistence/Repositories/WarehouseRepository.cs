@@ -8,7 +8,8 @@ using Microsoft.EntityFrameworkCore;
 namespace ECommerce.Infrastructure.Persistence.Repositories;
 
 public sealed class WarehouseRepository(
-    ECommerceDbContext dbContext)
+    ECommerceDbContext dbContext,
+    SellerDataScope dataScope)
     : IWarehouseRepository
 {
     public async Task<SellerStatus?> GetSellerStatusAsync(
@@ -51,7 +52,7 @@ public sealed class WarehouseRepository(
             Guid sellerId,
             CancellationToken cancellationToken = default)
     {
-        return await dbContext.Warehouses
+        return await dataScope.Warehouses(sellerId)
             .AsNoTracking()
             .Where(warehouse =>
                 warehouse.SellerId == sellerId)
@@ -65,7 +66,7 @@ public sealed class WarehouseRepository(
         Guid warehouseId,
         CancellationToken cancellationToken = default)
     {
-        return await dbContext.Warehouses
+        return await dataScope.Warehouses(sellerId)
             .AsNoTracking()
             .SingleOrDefaultAsync(
                 warehouse =>
@@ -79,7 +80,7 @@ public sealed class WarehouseRepository(
         Guid warehouseId,
         CancellationToken cancellationToken = default)
     {
-        return await dbContext.Warehouses
+        return await dataScope.Warehouses(sellerId)
             .SingleOrDefaultAsync(
                 warehouse =>
                     warehouse.SellerId == sellerId &&

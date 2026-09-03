@@ -1,4 +1,9 @@
-# ECommerce storefront, cart and orders demo
+# Original storefront, cart and orders checkpoint
+
+> This guide describes the earlier pending-payment-only checkpoint. For the current MVP,
+> including development-only demo payments, seller staff/roles, inventory operations and
+> seller shipment, use [ALL-APIS.md](ALL-APIS.md). Its setup commands and role/body tables
+> supersede the instructions below. No real payment provider or real charges are implemented.
 
 This checkpoint implements shopping without payments. Checkout creates a **PendingPayment** order and reserves inventory for 30 minutes. It does not charge a card, confirm payment, or promise shipment. Payment integration is the next phase.
 

@@ -6,6 +6,7 @@ using ECommerce.Application;
 using ECommerce.Infrastructure;
 using ECommerce.Api.Authorization;
 using ECommerce.Api.BackgroundJobs;
+using ECommerce.Application.Payments;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,6 +26,10 @@ builder.Services.AddProblemDetails(options =>
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 builder.Services.AddApplication();
+// Configuration alone cannot enable the simulation in Staging or Production.
+builder.Services.AddSingleton(new DemoPaymentMode(
+    builder.Environment.IsDevelopment() &&
+    builder.Configuration.GetValue<bool>("DemoPayments:Enabled")));
 
 var connectionString =
     builder.Configuration.GetConnectionString(

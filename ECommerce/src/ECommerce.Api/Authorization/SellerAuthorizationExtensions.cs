@@ -11,6 +11,16 @@ public static class SellerAuthorizationExtensions
     {
         services.AddAuthorization(options =>
         {
+            options.AddPolicy(SellerPolicies.Management, policy =>
+            {
+                policy.RequireAuthenticatedUser();
+                policy.AddRequirements(new SellerAccessRequirement(SellerRoleNames.Owner, SellerRoleNames.Manager));
+            });
+            options.AddPolicy(SellerPolicies.Inventory, policy =>
+            {
+                policy.RequireAuthenticatedUser();
+                policy.AddRequirements(new SellerAccessRequirement(SellerRoleNames.Owner, SellerRoleNames.Manager, SellerRoleNames.WarehouseStaff));
+            });
             options.AddPolicy(
                 SellerPolicies.Access,
                 policy =>

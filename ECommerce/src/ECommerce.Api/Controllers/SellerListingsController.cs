@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ECommerce.Api.Controllers;
 
-[Authorize(Policy = SellerPolicies.Owner)]
+[Authorize(Policy = SellerPolicies.Management)]
 [ApiController]
 [Route("api/sellers/{sellerId:guid}/listings")]
 public sealed class SellerListingsController(

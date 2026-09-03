@@ -11,6 +11,23 @@ public sealed class InventoryService(
     IInventoryRepository repository)
     : IInventoryService
 {
+    public async Task<Result<InventoryItemResponseDto>> UpdateQuantityAsync(Guid sellerId, Guid inventoryItemId,
+        UpdateInventoryQuantityRequestDto? request, bool adjustment, CancellationToken cancellationToken = default)
+    {
+        if (sellerId == Guid.Empty || inventoryItemId == Guid.Empty || request is null ||
+            request.Quantity < 0 || (!adjustment && request.Quantity == 0))
+            return Result<InventoryItemResponseDto>.Failure(new Error("inventory.quantity_invalid",
+                adjustment ? "Provide an on-hand quantity of zero or more." : "Provide a positive quantity to receive."));
+        byte[] rowVersion;
+        try { rowVersion = Convert.FromBase64String(request.RowVersion ?? ""); }
+        catch (FormatException) { return Result<InventoryItemResponseDto>.Failure(new Error("inventory.row_version_invalid", "Provide the current inventory rowVersion.")); }
+        if (rowVersion.Length != 8)
+            return Result<InventoryItemResponseDto>.Failure(new Error("inventory.row_version_invalid", "Provide the current inventory rowVersion."));
+        var result = await repository.UpdateQuantityAsync(sellerId, inventoryItemId, request.Quantity, rowVersion, adjustment, cancellationToken);
+        return result.IsSuccess ? Result<InventoryItemResponseDto>.Success(Map(result.Value!)) :
+            Result<InventoryItemResponseDto>.Failure(result.Errors);
+    }
+
     public async Task<Result<InventoryItemResponseDto>>
         CreateAsync(
             Guid sellerId,
@@ -95,6 +112,9 @@ public sealed class InventoryService(
         var outcome = await repository.TryCreateAsync(
             inventoryItem,
             cancellationToken);
+
+        if (outcome == InventoryCreateOutcome.NotAuthorized)
+            return Result<InventoryItemResponseDto>.Failure(InventoryErrors.WarehouseNotFound);
 
         if (outcome ==
             InventoryCreateOutcome.DuplicateWarehouseListing)

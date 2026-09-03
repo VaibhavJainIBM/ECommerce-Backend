@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 namespace ECommerce.Infrastructure.Persistence.Repositories;
 
 public sealed partial class ShoppingRepository(ECommerceDbContext dbContext)
-    : IShoppingRepository
+    : IShoppingRepository, IPaymentRepository, IFulfillmentRepository
 {
     private const decimal MaximumTotal = 9_999_999_999_999_999.99m;
 

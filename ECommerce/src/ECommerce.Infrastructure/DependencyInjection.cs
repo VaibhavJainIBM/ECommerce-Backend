@@ -1,5 +1,6 @@
 ﻿using ECommerce.Application.Abstractions.Persistence;
 using ECommerce.Infrastructure.Persistence.Repositories;
+using ECommerce.Application.SellerTeams;
 using ECommerce.Application.Abstractions.Authorization;
 using ECommerce.Application.Abstractions.Authentication;
 using ECommerce.Application.Abstractions.Identity;
@@ -90,7 +91,13 @@ public static class DependencyInjection
             IStorefrontRepository,
             StorefrontRepository>();
 
-        services.AddScoped<IShoppingRepository, ShoppingRepository>();
+        services.AddScoped<ShoppingRepository>();
+        services.AddScoped<IShoppingRepository>(sp => sp.GetRequiredService<ShoppingRepository>());
+        services.AddScoped<IPaymentRepository>(sp => sp.GetRequiredService<ShoppingRepository>());
+        services.AddScoped<IFulfillmentRepository>(sp => sp.GetRequiredService<ShoppingRepository>());
+        services.AddScoped<ICatalogBrowsingRepository, CatalogBrowsingRepository>();
+        services.AddScoped<ISellerTeamRepository, SellerTeamRepository>();
+        services.AddScoped<SellerDataScope>();
 
         return services;
     }

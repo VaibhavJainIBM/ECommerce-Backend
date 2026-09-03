@@ -1,5 +1,7 @@
 ﻿using ECommerce.Application.Abstractions.Persistence;
 using ECommerce.Application.Inventory.Models;
+using ECommerce.Application.Common;
+using ECommerce.Application.Inventory;
 using ECommerce.Domain.Entities;
 using ECommerce.Domain.Enums;
 using Microsoft.Data.SqlClient;
@@ -8,9 +10,59 @@ using Microsoft.EntityFrameworkCore;
 namespace ECommerce.Infrastructure.Persistence.Repositories;
 
 public sealed class InventoryRepository(
-    ECommerceDbContext dbContext)
+    ECommerceDbContext dbContext,
+    SellerDataScope dataScope)
     : IInventoryRepository
 {
+    public async Task<Result<InventoryItem>> UpdateQuantityAsync(Guid sellerId, Guid inventoryItemId,
+        int quantity, byte[] rowVersion, bool adjustment, CancellationToken cancellationToken = default)
+    {
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        if (!await AcquireMutationLockAsync(sellerId, cancellationToken))
+            return Result<InventoryItem>.Failure(new Error("inventory.stock_conflict", "Seller access is changing. Retry."));
+        var item = await dataScope.Inventory(sellerId)
+            .Include(i => i.Warehouse).Include(i => i.SellerListing).ThenInclude(l => l.Seller)
+            .SingleOrDefaultAsync(i => i.Id == inventoryItemId, cancellationToken);
+        if (item is null) return Result<InventoryItem>.Failure(InventoryErrors.InventoryItemNotFound(inventoryItemId));
+        if (item.SellerListing.Seller.Status != SellerStatus.Active)
+            return Result<InventoryItem>.Failure(InventoryErrors.SellerUnavailable(item.SellerListing.Seller.Status.ToString()));
+        if (item.Warehouse.Status != WarehouseStatus.Active)
+            return Result<InventoryItem>.Failure(InventoryErrors.WarehouseUnavailable(item.Warehouse.Status.ToString()));
+        if (item.SellerListing.Status == SellerListingStatus.Archived)
+            return Result<InventoryItem>.Failure(InventoryErrors.ListingUnavailable(item.SellerListing.Status.ToString()));
+        if (!item.RowVersion.SequenceEqual(rowVersion))
+            return Result<InventoryItem>.Failure(new Error("inventory.stock_conflict", "Inventory changed. Get its latest rowVersion and retry."));
+        try
+        {
+            if (adjustment) item.AdjustOnHand(quantity); else item.Receive(quantity);
+            await dbContext.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            return Result<InventoryItem>.Success(item);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            dbContext.ChangeTracker.Clear();
+            return Result<InventoryItem>.Failure(new Error("inventory.stock_conflict", "Inventory changed. Refresh and retry."));
+        }
+        catch (Exception ex) when (ex is OverflowException or InvalidOperationException or ArgumentOutOfRangeException)
+        {
+            dbContext.ChangeTracker.Clear();
+            return Result<InventoryItem>.Failure(new Error("inventory.quantity_invalid",
+                "Quantity must fit an integer and adjusted on-hand stock cannot be below reserved stock."));
+        }
+    }
+
+    private async Task<bool> AcquireMutationLockAsync(Guid sellerId, CancellationToken ct)
+    {
+        var output = new SqlParameter("@lockResult", System.Data.SqlDbType.Int) { Direction = System.Data.ParameterDirection.Output };
+        var resource = new SqlParameter("@resource", System.Data.SqlDbType.NVarChar, 255)
+            { Value = "ecommerce:seller-team:" + sellerId.ToString("N") };
+        await dbContext.Database.ExecuteSqlRawAsync(
+            "EXEC @lockResult = sys.sp_getapplock @Resource=@resource, @LockMode=N'Shared', @LockOwner=N'Transaction', @LockTimeout=5000;",
+            [output, resource], ct);
+        return output.Value is int status && status >= 0;
+    }
+
     public async Task<SellerStatus?> GetSellerStatusAsync(
         Guid sellerId,
         CancellationToken cancellationToken = default)
@@ -27,7 +79,7 @@ public sealed class InventoryRepository(
         Guid warehouseId,
         CancellationToken cancellationToken = default)
     {
-        return await dbContext.Warehouses
+        return await dataScope.Warehouses(sellerId)
             .SingleOrDefaultAsync(
                 warehouse =>
                     warehouse.SellerId == sellerId &&
@@ -54,12 +106,19 @@ public sealed class InventoryRepository(
     {
         ArgumentNullException.ThrowIfNull(inventoryItem);
 
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        if (!await AcquireMutationLockAsync(inventoryItem.SellerId, cancellationToken) ||
+            !await dataScope.Warehouses(inventoryItem.SellerId).AnyAsync(w => w.Id == inventoryItem.WarehouseId, cancellationToken))
+            return InventoryCreateOutcome.NotAuthorized;
+
         dbContext.InventoryItems.Add(inventoryItem);
 
         try
         {
             await dbContext.SaveChangesAsync(
                 cancellationToken);
+
+            await transaction.CommitAsync(cancellationToken);
 
             return InventoryCreateOutcome.Created;
         }
@@ -78,7 +137,7 @@ public sealed class InventoryRepository(
             Guid sellerId,
             CancellationToken cancellationToken = default)
     {
-        return await dbContext.InventoryItems
+        return await dataScope.Inventory(sellerId)
             .AsNoTracking()
             .Include(inventory =>
                 inventory.Warehouse)
@@ -98,7 +157,7 @@ public sealed class InventoryRepository(
         Guid inventoryItemId,
         CancellationToken cancellationToken = default)
     {
-        return await dbContext.InventoryItems
+        return await dataScope.Inventory(sellerId)
             .AsNoTracking()
             .Include(inventory =>
                 inventory.Warehouse)

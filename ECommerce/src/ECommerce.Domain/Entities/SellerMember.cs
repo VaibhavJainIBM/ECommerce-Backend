@@ -59,6 +59,23 @@ public sealed class SellerMember : AuditableEntity
 
     public void Activate()
     {
+        ActivateInvitation();
+    }
+
+    public void Reinvite()
+    {
+        if (Status != SellerMemberStatus.Removed)
+            throw new InvalidOperationException("Only removed members can be reinvited.");
+        foreach (var role in RoleAssignments) role.Revoke();
+        foreach (var warehouse in WarehouseAssignments) warehouse.Remove();
+        Status = SellerMemberStatus.Invited;
+        InvitedAtUtc = DateTimeOffset.UtcNow;
+        JoinedAtUtc = null;
+        MarkUpdated();
+    }
+
+    private void ActivateInvitation()
+    {
         if (Status != SellerMemberStatus.Invited)
         {
             throw new InvalidOperationException(

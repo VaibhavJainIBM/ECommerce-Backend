@@ -12,7 +12,7 @@ public sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.ToTable("Orders", table =>
         {
             table.HasCheckConstraint("CK_Orders_TotalAmount", "[TotalAmount] > 0");
-            table.HasCheckConstraint("CK_Orders_Status", "[Status] IN ('PendingPayment', 'Cancelled', 'Expired')");
+            table.HasCheckConstraint("CK_Orders_Status", "[Status] IN ('PendingPayment', 'Cancelled', 'Expired', 'Paid', 'PartiallyShipped', 'Shipped')");
         });
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).ValueGeneratedNever();
@@ -28,6 +28,8 @@ public sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.Property(x => x.TotalAmount).HasPrecision(18, 2).IsRequired();
         builder.Property(x => x.Status).HasConversion<string>().HasMaxLength(32).IsRequired();
         builder.Property(x => x.ExpiresAtUtc).HasPrecision(7).IsRequired();
+        builder.Property(x => x.PaidAtUtc).HasPrecision(7);
+        builder.Property(x => x.PaymentMode).HasMaxLength(16).IsUnicode(false);
         builder.Property(x => x.CreatedAtUtc).HasPrecision(7).IsRequired();
         builder.Property(x => x.UpdatedAtUtc).HasPrecision(7);
         builder.Property(x => x.RowVersion).IsRowVersion().IsRequired();

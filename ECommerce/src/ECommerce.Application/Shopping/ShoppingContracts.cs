@@ -41,13 +41,14 @@ public sealed record OrderItemResponseDto(
     Guid OrderItemId, Guid SellerId, string SellerDisplayName,
     Guid ListingId, Guid ProductVariantId, string ProductTitle,
     string VariantName, string SellerSku, decimal UnitPriceAmount,
-    string CurrencyCode, int Quantity, decimal LineTotal);
+    string CurrencyCode, int Quantity, decimal LineTotal, DateTimeOffset? ShippedAtUtc = null);
 
 public sealed record OrderResponseDto(
     Guid OrderId, string OrderNumber, string Status, decimal TotalAmount,
     string CurrencyCode, string RecipientName, string Phone,
     ShippingAddressDto ShippingAddress, IReadOnlyList<OrderItemResponseDto> Items,
-    DateTimeOffset CreatedAtUtc, DateTimeOffset ExpiresAtUtc, string RowVersion);
+    DateTimeOffset CreatedAtUtc, DateTimeOffset ExpiresAtUtc, string RowVersion,
+    DateTimeOffset? PaidAtUtc = null, string? PaymentMode = null);
 
 public sealed record CheckoutResponseDto(OrderResponseDto Order, bool Replayed);
 
@@ -59,7 +60,7 @@ public sealed record SellerOrderResponseDto(
     Guid OrderId, string OrderNumber, string Status, decimal SellerSubtotal,
     string CurrencyCode, string RecipientName, string Phone,
     ShippingAddressDto ShippingAddress, IReadOnlyList<OrderItemResponseDto> Items,
-    DateTimeOffset CreatedAtUtc, DateTimeOffset ExpiresAtUtc);
+    DateTimeOffset CreatedAtUtc, DateTimeOffset ExpiresAtUtc, string? PaymentMode = null);
 
 public sealed record PagedSellerOrdersResponseDto(
     IReadOnlyList<SellerOrderResponseDto> Items, int Page, int PageSize, int TotalCount);
