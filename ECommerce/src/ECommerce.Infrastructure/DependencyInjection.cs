@@ -90,6 +90,8 @@ public static class DependencyInjection
             IStorefrontRepository,
             StorefrontRepository>();
 
+        services.AddScoped<IShoppingRepository, ShoppingRepository>();
+
         return services;
     }
 }

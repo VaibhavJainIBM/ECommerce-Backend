@@ -23,7 +23,7 @@ public sealed record StorefrontListingResponseDto(
     string SellerSku,
     decimal PriceAmount,
     string CurrencyCode,
-    int AvailableQuantity);
+    long AvailableQuantity);
 
 public sealed record PagedStorefrontListingsResponseDto(
     IReadOnlyCollection<StorefrontListingResponseDto> Items,
@@ -46,7 +46,7 @@ public sealed record StorefrontListingReadModel(
     string SellerSku,
     decimal PriceAmount,
     string CurrencyCode,
-    int AvailableQuantity);
+    long AvailableQuantity);
 
 public sealed record StorefrontListingPage(
     IReadOnlyCollection<StorefrontListingReadModel> Items,

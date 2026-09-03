@@ -5,6 +5,7 @@ using ECommerce.Api.ExceptionHandling;
 using ECommerce.Application;
 using ECommerce.Infrastructure;
 using ECommerce.Api.Authorization;
+using ECommerce.Api.BackgroundJobs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -76,6 +77,7 @@ builder.Services
 
 
 builder.Services.AddSellerAuthorization();
+builder.Services.AddHostedService<OrderExpirationWorker>();
 
 var app = builder.Build();
 

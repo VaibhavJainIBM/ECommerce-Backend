@@ -6,6 +6,7 @@ using ECommerce.Application.Listings;
 using ECommerce.Application.Warehouses;
 using ECommerce.Application.Inventory;
 using ECommerce.Application.Storefront;
+using ECommerce.Application.Shopping;
 
 namespace ECommerce.Application;
 
@@ -49,6 +50,8 @@ public static class DependencyInjection
         services.AddScoped<
             IStorefrontService,
             StorefrontService>();
+
+        services.AddScoped<IShoppingService, ShoppingService>();
 
         return services;
     }

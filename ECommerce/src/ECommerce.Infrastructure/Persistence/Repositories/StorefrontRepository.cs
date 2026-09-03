@@ -1,5 +1,6 @@
 ﻿using ECommerce.Application.Abstractions.Persistence;
 using ECommerce.Application.Storefront;
+using ECommerce.Domain.Entities;
 using ECommerce.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
@@ -22,25 +23,27 @@ public sealed class StorefrontRepository(
             var normalizedSearch = search.Trim();
 
             query = query.Where(listing =>
-                listing.ProductTitle.Contains(
+                listing.ProductVariant.Product.Title.Contains(
                     normalizedSearch) ||
-                listing.BrandName.Contains(
+                listing.ProductVariant.Product.BrandName.Contains(
                     normalizedSearch) ||
-                listing.VariantName.Contains(
+                listing.ProductVariant.Name.Contains(
                     normalizedSearch) ||
-                listing.SellerDisplayName.Contains(
+                listing.Seller.DisplayName.Contains(
                     normalizedSearch));
         }
 
         var totalCount = await query.CountAsync(
             cancellationToken);
 
-        var items = await query
-            .OrderBy(listing => listing.ProductTitle)
-            .ThenBy(listing => listing.PriceAmount)
-            .ThenBy(listing => listing.ListingId)
+        var pageQuery = query
+            .OrderBy(listing => listing.ProductVariant.Product.Title)
+            .ThenBy(listing => listing.Price.Amount)
+            .ThenBy(listing => listing.Id)
             .Skip(skip)
-            .Take(take)
+            .Take(take);
+
+        var items = await Project(pageQuery)
             .ToArrayAsync(cancellationToken);
 
         return new StorefrontListingPage(
@@ -53,13 +56,14 @@ public sealed class StorefrontRepository(
             Guid listingId,
             CancellationToken cancellationToken = default)
     {
-        return await BuildActiveListingQuery()
-            .SingleOrDefaultAsync(
-                listing => listing.ListingId == listingId,
-                cancellationToken);
+        var query = BuildActiveListingQuery()
+            .Where(listing => listing.Id == listingId);
+
+        return await Project(query)
+            .SingleOrDefaultAsync(cancellationToken);
     }
 
-    private IQueryable<StorefrontListingReadModel>
+    private IQueryable<SellerListing>
         BuildActiveListingQuery()
     {
         return dbContext.SellerListings
@@ -72,8 +76,18 @@ public sealed class StorefrontRepository(
                 listing.ProductVariant.Status ==
                     ProductVariantStatus.Active &&
                 listing.ProductVariant.Product.Status ==
-                    ProductStatus.Active)
-            .Select(listing =>
+                    ProductStatus.Active &&
+                listing.InventoryItems.Any(inventory =>
+                    inventory.Warehouse.Status == WarehouseStatus.Active &&
+                    inventory.OnHandQuantity > inventory.ReservedQuantity));
+    }
+
+    // Keep projection last: filtering on a positional record constructor
+    // is not reliably translatable by EF Core.
+    private static IQueryable<StorefrontListingReadModel> Project(
+        IQueryable<SellerListing> query)
+    {
+        return query.Select(listing =>
                 new StorefrontListingReadModel(
                     listing.Id,
                     listing.SellerId,
@@ -93,11 +107,9 @@ public sealed class StorefrontRepository(
                             inventory.Warehouse.Status ==
                                 WarehouseStatus.Active)
                         .Sum(inventory =>
-                            (int?)(
+                            (long?)(
                                 inventory.OnHandQuantity -
                                 inventory.ReservedQuantity))
-                        ?? 0))
-            .Where(listing =>
-                listing.AvailableQuantity > 0);
+                        ?? 0L));
     }
 }
