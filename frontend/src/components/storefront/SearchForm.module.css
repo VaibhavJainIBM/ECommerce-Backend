@@ -1,0 +1,79 @@
+.form {
+  margin-bottom: 2.5rem;
+  padding: 1.25rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
+.label {
+  display: block;
+  margin-bottom: 0.75rem;
+  color: var(--color-olive-dark);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
+
+.input {
+  width: 100%;
+  min-width: 0;
+  min-height: 3rem;
+  padding: 0.75rem 1rem;
+  color: var(--color-ink);
+  background: var(--color-canvas);
+  border: 1px solid var(--color-border);
+  border-radius: 0;
+}
+
+.input::placeholder {
+  color: var(--color-muted);
+}
+
+.input:focus {
+  border-color: var(--color-olive);
+  outline: 1px solid var(--color-olive);
+}
+
+.submitButton,
+.clearButton {
+  min-height: 3rem;
+  padding-inline: 1.4rem;
+  border-radius: 0;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.submitButton {
+  color: var(--color-surface);
+  background: var(--color-plum);
+  border: 1px solid var(--color-plum);
+}
+
+.submitButton:hover {
+  background: var(--color-purple);
+}
+
+.clearButton {
+  color: var(--color-plum);
+  background: transparent;
+  border: 1px solid var(--color-plum);
+}
+
+.clearButton:hover {
+  background: rgb(57 35 63 / 7%);
+}
+
+@media (min-width: 42rem) {
+  .controls {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+  }
+}

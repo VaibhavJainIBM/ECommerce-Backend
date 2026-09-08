@@ -1,0 +1,94 @@
+.card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.imagePlaceholder {
+  display: grid;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  place-items: center;
+  color: var(--color-plum);
+  background: var(--color-olive-light);
+  border: 1px solid var(--color-border);
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 8vw, 5rem);
+  font-weight: 400;
+}
+
+.content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding-top: 1.15rem;
+}
+
+.brand {
+  color: var(--color-olive-dark);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin-top: 0.45rem;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+.variant {
+  margin-top: 0.45rem;
+  color: var(--color-muted);
+  font-size: 0.825rem;
+}
+
+.seller {
+  margin-top: 1rem;
+  color: var(--color-muted);
+  font-size: 0.825rem;
+}
+
+.priceRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: auto;
+  padding-top: 1.25rem;
+}
+
+.price {
+  color: var(--color-plum);
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 600;
+}
+
+.stock {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.stock::before {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: currentColor;
+  content: "";
+}
+
+.inStock {
+  color: var(--color-olive-dark);
+}
+
+.outOfStock {
+  color: var(--color-danger);
+}
