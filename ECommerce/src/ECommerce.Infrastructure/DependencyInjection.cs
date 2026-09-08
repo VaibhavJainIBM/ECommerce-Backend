@@ -10,6 +10,8 @@ using ECommerce.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using ECommerce.Application.Abstractions.Files;
+using ECommerce.Infrastructure.Files;
 
 
 namespace ECommerce.Infrastructure;
@@ -70,6 +72,14 @@ public static class DependencyInjection
         services.AddScoped<
             IProductCatalogRepository,
             ProductCatalogRepository>();
+
+        services.AddScoped<
+            ICatalogCsvParser,
+            CatalogCsvParser>();
+
+        services.AddScoped<
+            ICatalogBulkRepository,
+            CatalogBulkRepository>();
 
         services.AddScoped<
             ISellerListingRepository,

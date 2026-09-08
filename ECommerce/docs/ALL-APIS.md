@@ -271,3 +271,40 @@ These are simulated outcomes, not bank/gateway confirmations. A successful demo 
 
 Reuse a creation key only to retry that same attempt. Repeating its same completion outcome is safe; trying to turn a completed failure into success is rejected. Use another unpaid order to demonstrate the failure path after demonstrating success.
 
+## 7. Platform admin bulk catalog CSV
+
+Use the PlatformAdmin token.
+
+| Method | Path | Body |
+| --- | --- | --- |
+| POST | `/api/admin/catalog/products/import-csv` | multipart/form-data |
+
+In Postman, select **Body → form-data** and add:
+
+| Key | Type | Value |
+| --- | --- | --- |
+| `file` | File | A UTF-8 `.csv` file |
+| `activate` | Text | `false` for Draft or `true` for Active |
+
+Do not manually set `Content-Type`; Postman adds the multipart boundary. Use **Authorization → Bearer Token → {{adminToken}}**.
+
+The CSV header row must be exactly:
+
+```csv
+ProductKey,Title,BrandName,Description,VariantName,VariantCode,Gtin
+```
+
+Each row represents one shared-catalog product variant. Rows with the same `ProductKey` become one product. Repeat the same Title, BrandName and Description on every row for that ProductKey. `VariantCode` is the platform catalog code, not a seller's private SellerSku. Price, SellerId, warehouse and inventory do not belong in this import.
+
+Limits and behavior:
+
+- Maximum file size: 2 MB.
+- Maximum data rows: 1,000.
+- Maximum variants per ProductKey: 100.
+- GTIN is optional, but when supplied it must contain 8, 12, 13 or 14 digits and be globally unique.
+- The server validates the complete file before saving.
+- A successful import creates every product and variant in one database transaction and returns 201.
+- Validation errors return 400, an existing/concurrent GTIN returns 409, and an oversized request returns 413.
+
+This MVP import is append-only and not idempotent because ProductKey is only a grouping key in the file and is not stored in the database. Keep a GTIN on every production row, and do not blindly retry after an uncertain network response: first check whether the products were created. Re-uploading the supplied example returns 409 because its GTINs already exist instead of silently adding the same variants again.
+
