@@ -14,32 +14,102 @@
   min-height: var(--header-height);
   align-items: center;
   justify-content: flex-end;
-  gap: 2rem;
+  gap: var(--space-6);
+}
+
+.desktopNavigation,
+.desktopAccount {
+  display: none;
+  align-items: center;
 }
 
 .desktopNavigation {
-  display: none;
-  align-items: center;
-  gap: 2rem;
+  gap: var(--space-6);
 }
 
-.navigationLink {
+.desktopAccount {
+  gap: var(--space-4);
+  margin-left: auto;
+  padding-left: var(--space-6);
+  border-left: 1px solid var(--color-border);
+}
+
+.navigationLink,
+.authLink {
   padding-block: 0.4rem;
   color: var(--color-muted);
-  font-size: 0.75rem;
-  font-weight: 700;
+  border-bottom: 1px solid transparent;
+  font-size: 0.7rem;
+  font-weight: 800;
   letter-spacing: 0.09em;
   text-transform: uppercase;
-  border-bottom: 1px solid transparent;
 }
 
-.navigationLink:hover {
+.navigationLink:hover,
+.authLink:hover {
   color: var(--color-plum);
   border-bottom-color: var(--color-olive);
 }
 
-@media (min-width: 48rem) {
-  .desktopNavigation {
+.accountLink {
+  max-width: 14rem;
+  overflow: hidden;
+  color: var(--color-plum);
+  font-family: var(--font-display);
+  font-size: 1rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.accountLink:hover {
+  color: var(--color-purple);
+}
+
+.registerLink,
+.logoutButton {
+  display: inline-flex;
+  min-height: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  padding-inline: var(--space-4);
+  border-radius: 0;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.registerLink {
+  color: var(--color-surface);
+  background: var(--color-plum);
+  border: 1px solid var(--color-plum);
+}
+
+.registerLink:hover {
+  background: var(--color-purple);
+  border-color: var(--color-purple);
+}
+
+.logoutButton {
+  color: var(--color-plum);
+  background: transparent;
+  border: 1px solid var(--color-border);
+}
+
+.logoutButton:hover:not(:disabled) {
+  color: var(--color-surface);
+  background: var(--color-olive);
+  border-color: var(--color-olive);
+}
+
+.logoutButton:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+@media (min-width: 64rem) {
+  .desktopNavigation,
+  .desktopAccount {
     display: flex;
   }
 }

@@ -1,0 +1,82 @@
+.page {
+  padding-top: clamp(3rem, 8vw, 6rem);
+  padding-bottom: var(--space-8);
+}
+
+.heading {
+  max-width: 44rem;
+}
+
+.eyebrow {
+  color: var(--color-olive-dark);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin-top: var(--space-3);
+  color: var(--color-plum);
+  font-family: var(--font-display);
+  font-size: clamp(2.75rem, 8vw, 5rem);
+  font-weight: 400;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+}
+
+.description {
+  max-width: 36rem;
+  margin-top: var(--space-5);
+  color: var(--color-muted);
+  line-height: 1.7;
+}
+
+.card {
+  max-width: 44rem;
+  margin-top: var(--space-7);
+  padding: clamp(1.25rem, 4vw, 2rem);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-top: 0.3rem solid var(--color-olive);
+}
+
+.cardTitle {
+  color: var(--color-plum);
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 400;
+}
+
+.details {
+  display: grid;
+  margin-top: var(--space-5);
+}
+
+.details div {
+  display: grid;
+  grid-template-columns: minmax(8rem, 0.4fr) 1fr;
+  gap: var(--space-4);
+  padding-block: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.details dt {
+  color: var(--color-olive-dark);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.details dd {
+  color: var(--color-ink);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 36rem) {
+  .details div {
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+  }
+}

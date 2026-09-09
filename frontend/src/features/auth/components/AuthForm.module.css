@@ -1,0 +1,156 @@
+.page {
+  display: grid;
+  min-height: calc(100vh - 12rem);
+  place-items: center;
+  padding: var(--space-8) var(--space-4);
+  background: var(--color-canvas);
+}
+
+.panel {
+  width: min(100%, 32rem);
+  padding: clamp(1.5rem, 5vw, 3rem);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-top: 0.3rem solid var(--color-olive);
+}
+
+.eyebrow {
+  color: var(--color-olive-dark);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin-top: var(--space-3);
+  color: var(--color-plum);
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 8vw, 4rem);
+  font-weight: 400;
+  letter-spacing: -0.035em;
+  line-height: 0.98;
+}
+
+.description {
+  max-width: 28rem;
+  margin-top: var(--space-4);
+  color: var(--color-muted);
+  line-height: 1.7;
+}
+
+.form {
+  display: grid;
+  gap: var(--space-5);
+  margin-top: var(--space-7);
+}
+
+.nameFields {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.field {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.field span {
+  color: var(--color-olive-dark);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.field input {
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.7rem 0.85rem;
+  color: var(--color-ink);
+  background: var(--color-canvas);
+  border: 1px solid var(--color-border);
+  border-radius: 0;
+}
+
+.field input::placeholder {
+  color: var(--color-muted);
+  opacity: 0.7;
+}
+
+.field input:hover:not(:disabled) {
+  border-color: var(--color-olive);
+}
+
+.field input:focus {
+  border-color: var(--color-olive);
+  outline: 1px solid var(--color-olive);
+  outline-offset: 0;
+}
+
+.field input:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.error {
+  padding-left: var(--space-3);
+  color: var(--color-danger);
+  border-left: 0.2rem solid var(--color-danger);
+  font-size: 0.825rem;
+  line-height: 1.55;
+}
+
+.submit {
+  min-height: 3rem;
+  padding-inline: var(--space-5);
+  color: var(--color-surface);
+  background: var(--color-plum);
+  border: 1px solid var(--color-plum);
+  border-radius: 0;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.submit:hover:not(:disabled) {
+  background: var(--color-purple);
+  border-color: var(--color-purple);
+}
+
+.submit:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.footer {
+  margin-top: var(--space-6);
+  color: var(--color-muted);
+  font-size: 0.825rem;
+  text-align: center;
+}
+
+.footer a {
+  color: var(--color-plum);
+  font-weight: 800;
+  border-bottom: 1px solid var(--color-olive);
+}
+
+.footer a:hover {
+  color: var(--color-purple);
+}
+
+@media (min-width: 36rem) {
+  .nameFields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 35.99rem) {
+  .page {
+    min-height: auto;
+    place-items: start stretch;
+    padding-block: var(--space-6);
+  }
+}
