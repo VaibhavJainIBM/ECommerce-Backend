@@ -75,8 +75,8 @@
           "type": "noauth"
         },
         "header": [],
-        "url": "{{baseUrl}}/api/storefront/listings?page=1&pageSize=20",
-        "description": "Public browse. Automatically selects the first active, in-stock listing. Change listingId/sellerId locally to select another."
+        "url": "{{baseUrl}}/api/storefront/listings?brand=&minPrice=&maxPrice=&sort=name_asc&page=1&pageSize=20",
+        "description": "Public browse with optional search, brand, minimum-price, and maximum-price filters. Sort accepts name_asc, name_desc, price_asc, or price_desc. Automatically selects the first active, in-stock listing."
       },
       "event": [
         {

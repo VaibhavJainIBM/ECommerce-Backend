@@ -1,0 +1,44 @@
+.error {
+  max-width: 44rem;
+  padding-block: 7rem;
+  text-align: center;
+}
+
+.label {
+  color: var(--color-olive-dark);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin-top: 1rem;
+  font-family: var(--font-display);
+  font-size: clamp(2.25rem, 6vw, 4rem);
+  font-weight: 400;
+  line-height: 1;
+}
+
+.description {
+  max-width: 32rem;
+  margin: 1.25rem auto 0;
+  color: var(--color-muted);
+}
+
+.button {
+  margin-top: 2rem;
+  padding: 0.85rem 1.4rem;
+  color: var(--color-surface);
+  background: var(--color-plum);
+  border: 1px solid var(--color-plum);
+  border-radius: 0;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.button:hover {
+  background: var(--color-purple);
+}

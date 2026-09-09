@@ -53,9 +53,9 @@ public sealed class StorefrontServiceTests
             }, cancellation.Token);
 
         Assert.True(result.IsSuccess);
-        Assert.Equal("phone", repository.LastSearch);
-        Assert.Equal(20, repository.LastSkip);
-        Assert.Equal(20, repository.LastTake);
+        Assert.Equal("phone", repository.LastCriteria!.Search);
+        Assert.Equal(20, repository.LastCriteria.Skip);
+        Assert.Equal(20, repository.LastCriteria.Take);
         Assert.Equal(cancellation.Token, repository.LastToken);
         Assert.Equal(3, result.Value!.TotalPages);
         Assert.Equal(41, result.Value.TotalCount);
@@ -68,10 +68,56 @@ public sealed class StorefrontServiceTests
         var result = await new StorefrontService(repository).SearchAsync(null);
 
         Assert.True(result.IsSuccess);
-        Assert.Null(repository.LastSearch);
-        Assert.Equal(0, repository.LastSkip);
-        Assert.Equal(20, repository.LastTake);
+        Assert.Null(repository.LastCriteria!.Search);
+        Assert.Equal(0, repository.LastCriteria.Skip);
+        Assert.Equal(20, repository.LastCriteria.Take);
         Assert.Equal(0, result.Value!.TotalPages);
+    }
+
+    [Fact]
+    public async Task Filters_AreNormalizedAndPassedToRepository()
+    {
+        var repository = new FakeRepository();
+
+        var result = await new StorefrontService(repository).SearchAsync(
+            new StorefrontQueryDto
+            {
+                Brand = "  DemoTech  ",
+                MinPrice = 100,
+                MaxPrice = 500,
+                Sort = StorefrontSortNames.PriceDescending
+            });
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("DemoTech", repository.LastCriteria!.Brand);
+        Assert.Equal(100, repository.LastCriteria.MinPrice);
+        Assert.Equal(500, repository.LastCriteria.MaxPrice);
+        Assert.Equal(StorefrontSort.PriceDescending,
+            repository.LastCriteria.Sort);
+    }
+
+    [Fact]
+    public async Task InvalidFilters_DoNotQueryRepository()
+    {
+        var repository = new FakeRepository();
+
+        var result = await new StorefrontService(repository).SearchAsync(
+            new StorefrontQueryDto
+            {
+                Brand = new string('b', 151),
+                MinPrice = 20,
+                MaxPrice = 10,
+                Sort = "popular"
+            });
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(result.Errors,
+            error => error.Code == StorefrontErrors.BrandTooLong.Code);
+        Assert.Contains(result.Errors,
+            error => error.Code == StorefrontErrors.PriceRangeInvalid.Code);
+        Assert.Contains(result.Errors,
+            error => error.Code == StorefrontErrors.SortInvalid.Code);
+        Assert.Equal(0, repository.SearchCalls);
     }
 
     [Fact]
@@ -103,19 +149,15 @@ public sealed class StorefrontServiceTests
         public int TotalCount { get; init; }
         public int SearchCalls { get; private set; }
         public int FindCalls { get; private set; }
-        public string? LastSearch { get; private set; }
-        public int LastSkip { get; private set; }
-        public int LastTake { get; private set; }
+        public StorefrontSearchCriteria? LastCriteria { get; private set; }
         public CancellationToken LastToken { get; private set; }
 
         public Task<StorefrontListingPage> SearchAsync(
-            string? search, int skip, int take,
+            StorefrontSearchCriteria criteria,
             CancellationToken cancellationToken = default)
         {
             SearchCalls++;
-            LastSearch = search;
-            LastSkip = skip;
-            LastTake = take;
+            LastCriteria = criteria;
             LastToken = cancellationToken;
             return Task.FromResult(new StorefrontListingPage(
                 Array.Empty<StorefrontListingReadModel>(), TotalCount));

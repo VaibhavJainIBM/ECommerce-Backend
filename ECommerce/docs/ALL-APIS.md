@@ -96,7 +96,7 @@ The built-in roles are fixed: `Owner`, `Manager`, `WarehouseStaff`. Custom role/
 | POST | `/api/auth/login` | Login below |
 | GET | `/api/catalog/products?search=iphone&page=1&pageSize=20` | none |
 | GET | `/api/catalog/products/{{productId}}` | none |
-| GET | `/api/storefront/listings?search=iphone&page=1&pageSize=20` | none |
+| GET | `/api/storefront/listings?search=iphone&brand=Apple&minPrice=100&maxPrice=100000&sort=price_asc&page=1&pageSize=20` | none; `sort` accepts `name_asc`, `name_desc`, `price_asc`, or `price_desc` |
 | GET | `/api/storefront/listings/{{listingId}}` | none |
 
 Register (use separate email addresses for customer, seller owner, manager, and staff):

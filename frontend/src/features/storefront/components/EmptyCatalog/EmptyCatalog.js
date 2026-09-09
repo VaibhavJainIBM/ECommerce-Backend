@@ -9,7 +9,7 @@ export default function EmptyCatalog({ search }) {
       <h3 className={styles.title}>
         {search
           ? `No products matched “${search}”.`
-          : "The collection is currently empty."}
+          : "The product catalog is currently empty."}
       </h3>
 
       <p className={styles.description}>
@@ -19,8 +19,8 @@ export default function EmptyCatalog({ search }) {
       </p>
 
       {search && (
-        <Link className={styles.link} href="/">
-          View the full collection
+        <Link className={styles.link} href="/products">
+          View all products
         </Link>
       )}
     </div>

@@ -11,16 +11,14 @@ public sealed class StorefrontRepository(
     : IStorefrontRepository
 {
     public async Task<StorefrontListingPage> SearchAsync(
-        string? search,
-        int skip,
-        int take,
+        StorefrontSearchCriteria criteria,
         CancellationToken cancellationToken = default)
     {
         var query = BuildActiveListingQuery();
 
-        if (!string.IsNullOrWhiteSpace(search))
+        if (!string.IsNullOrWhiteSpace(criteria.Search))
         {
-            var normalizedSearch = search.Trim();
+            var normalizedSearch = criteria.Search.Trim();
 
             query = query.Where(listing =>
                 listing.ProductVariant.Product.Title.Contains(
@@ -33,15 +31,34 @@ public sealed class StorefrontRepository(
                     normalizedSearch));
         }
 
+
+        if (!string.IsNullOrWhiteSpace(criteria.Brand))
+        {
+            var normalizedBrand = criteria.Brand.Trim();
+
+            query = query.Where(listing =>
+                listing.ProductVariant.Product.BrandName.Contains(
+                    normalizedBrand));
+        }
+
+        if (criteria.MinPrice.HasValue)
+        {
+            query = query.Where(listing =>
+                listing.Price.Amount >= criteria.MinPrice.Value);
+        }
+
+        if (criteria.MaxPrice.HasValue)
+        {
+            query = query.Where(listing =>
+                listing.Price.Amount <= criteria.MaxPrice.Value);
+        }
+
         var totalCount = await query.CountAsync(
             cancellationToken);
 
-        var pageQuery = query
-            .OrderBy(listing => listing.ProductVariant.Product.Title)
-            .ThenBy(listing => listing.Price.Amount)
-            .ThenBy(listing => listing.Id)
-            .Skip(skip)
-            .Take(take);
+        var pageQuery = ApplySort(query, criteria.Sort)
+            .Skip(criteria.Skip)
+            .Take(criteria.Take);
 
         var items = await Project(pageQuery)
             .ToArrayAsync(cancellationToken);
@@ -80,6 +97,35 @@ public sealed class StorefrontRepository(
                 listing.InventoryItems.Any(inventory =>
                     inventory.Warehouse.Status == WarehouseStatus.Active &&
                     inventory.OnHandQuantity > inventory.ReservedQuantity));
+    }
+
+    private static IOrderedQueryable<SellerListing> ApplySort(
+        IQueryable<SellerListing> query,
+        StorefrontSort sort)
+    {
+        return sort switch
+        {
+            StorefrontSort.NameDescending => query
+                .OrderByDescending(listing =>
+                    listing.ProductVariant.Product.Title)
+                .ThenBy(listing => listing.Price.Amount)
+                .ThenBy(listing => listing.Id),
+            StorefrontSort.PriceAscending => query
+                .OrderBy(listing => listing.Price.Amount)
+                .ThenBy(listing =>
+                    listing.ProductVariant.Product.Title)
+                .ThenBy(listing => listing.Id),
+            StorefrontSort.PriceDescending => query
+                .OrderByDescending(listing => listing.Price.Amount)
+                .ThenBy(listing =>
+                    listing.ProductVariant.Product.Title)
+                .ThenBy(listing => listing.Id),
+            _ => query
+                .OrderBy(listing =>
+                    listing.ProductVariant.Product.Title)
+                .ThenBy(listing => listing.Price.Amount)
+                .ThenBy(listing => listing.Id)
+        };
     }
 
     // Keep projection last: filtering on a positional record constructor

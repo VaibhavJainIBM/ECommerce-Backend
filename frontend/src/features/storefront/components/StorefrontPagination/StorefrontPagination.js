@@ -1,22 +1,11 @@
 import Link from "next/link";
-import styles from "./Pagination.module.css";
+import { createProductsHref } from "@/features/storefront/utils/storefront-query";
+import styles from "./StorefrontPagination.module.css";
 
-function createPageHref(page, search) {
-  const query = new URLSearchParams();
-
-  query.set("page", String(page));
-
-  if (search) {
-    query.set("search", search);
-  }
-
-  return `/?${query.toString()}`;
-}
-
-export default function Pagination({
+export default function StorefrontPagination({
   currentPage,
   totalPages,
-  search,
+  filters,
 }) {
   if (totalPages <= 1) {
     return null;
@@ -33,7 +22,9 @@ export default function Pagination({
       {hasPreviousPage ? (
         <Link
           className={styles.link}
-          href={createPageHref(currentPage - 1, search)}
+          href={createProductsHref(filters, {
+            page: currentPage - 1,
+          })}
         >
           ← Previous
         </Link>
@@ -48,7 +39,9 @@ export default function Pagination({
       {hasNextPage ? (
         <Link
           className={styles.link}
-          href={createPageHref(currentPage + 1, search)}
+          href={createProductsHref(filters, {
+            page: currentPage + 1,
+          })}
         >
           Next →
         </Link>

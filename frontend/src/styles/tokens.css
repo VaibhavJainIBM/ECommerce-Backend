@@ -1,0 +1,31 @@
+:root {
+  --color-canvas: #f3f0e7;
+  --color-surface: #faf8f2;
+  --color-ink: #261f28;
+  --color-muted: #746d72;
+
+  --color-plum: #39233f;
+  --color-purple: #604264;
+
+  --color-olive: #6d7447;
+  --color-olive-dark: #4e5432;
+  --color-olive-light: #dfe1cc;
+
+  --color-border: #d8d1c3;
+  --color-danger: #8b3f4b;
+
+  --font-body: var(--font-geist-sans), Arial, sans-serif;
+  --font-display: Georgia, "Times New Roman", serif;
+
+  --page-width: 76rem;
+  --header-height: 4.5rem;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+}

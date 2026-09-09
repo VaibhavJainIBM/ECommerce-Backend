@@ -5,9 +5,7 @@ namespace ECommerce.Application.Abstractions.Persistence;
 public interface IStorefrontRepository
 {
     Task<StorefrontListingPage> SearchAsync(
-        string? search,
-        int skip,
-        int take,
+        StorefrontSearchCriteria criteria,
         CancellationToken cancellationToken = default);
 
     Task<StorefrontListingReadModel?> FindByIdAsync(

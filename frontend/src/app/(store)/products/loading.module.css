@@ -1,0 +1,63 @@
+.loading {
+  padding-block: 4rem 6rem;
+}
+
+.label {
+  margin-bottom: 2rem;
+  color: var(--color-olive-dark);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(min(100%, 18rem), 1fr)
+  );
+  gap: 2.5rem 1.5rem;
+}
+
+.image,
+.title,
+.text {
+  background: var(--color-border);
+  animation: pulse 1.2s ease-in-out infinite alternate;
+}
+
+.image {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+}
+
+.title {
+  width: 70%;
+  height: 1.25rem;
+  margin-top: 1rem;
+}
+
+.text {
+  width: 45%;
+  height: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+@keyframes pulse {
+  from {
+    opacity: 0.45;
+  }
+
+  to {
+    opacity: 0.9;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .image,
+  .title,
+  .text {
+    animation: none;
+  }
+}

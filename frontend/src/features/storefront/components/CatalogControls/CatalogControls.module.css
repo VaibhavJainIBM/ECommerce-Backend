@@ -1,0 +1,125 @@
+.form {
+  margin-bottom: 1.5rem;
+  padding: clamp(1rem, 3vw, 1.5rem);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
+.headingRow {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.eyebrow,
+.field span {
+  color: var(--color-olive-dark);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin-top: 0.25rem;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 400;
+}
+
+.fields {
+  display: grid;
+  gap: 1rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.field input,
+.field select {
+  width: 100%;
+  min-width: 0;
+  min-height: 3rem;
+  padding: 0.7rem 0.85rem;
+  color: var(--color-ink);
+  background: var(--color-canvas);
+  border: 1px solid var(--color-border);
+  border-radius: 0;
+}
+
+.field input:focus,
+.field select:focus {
+  border-color: var(--color-olive);
+  outline: 1px solid var(--color-olive);
+}
+
+.submitButton,
+.clearButton {
+  border-radius: 0;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.submitButton {
+  width: 100%;
+  min-height: 3rem;
+  margin-top: 1.25rem;
+  padding-inline: 1.5rem;
+  color: var(--color-surface);
+  background: var(--color-plum);
+  border: 1px solid var(--color-plum);
+}
+
+.submitButton:hover:not(:disabled) {
+  background: var(--color-purple);
+}
+
+.clearButton {
+  padding: 0.45rem 0;
+  color: var(--color-plum);
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid currentColor;
+}
+
+.submitButton:disabled,
+.clearButton:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.error {
+  margin-top: 1rem;
+  color: var(--color-danger);
+  font-size: 0.825rem;
+}
+
+@media (min-width: 42rem) {
+  .fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .searchField {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 68rem) {
+  .fields {
+    grid-template-columns: 2fr repeat(4, minmax(0, 1fr));
+  }
+
+  .searchField {
+    grid-column: auto;
+  }
+
+  .submitButton {
+    width: auto;
+  }
+}

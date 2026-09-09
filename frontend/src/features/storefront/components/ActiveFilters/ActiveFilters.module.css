@@ -1,0 +1,30 @@
+.filters {
+  margin-bottom: 2rem;
+}
+
+.label {
+  margin-bottom: 0.65rem;
+  color: var(--color-muted);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.chip {
+  padding: 0.5rem 0.7rem;
+  color: var(--color-plum);
+  background: var(--color-olive-light);
+  border: 1px solid var(--color-border);
+  font-size: 0.75rem;
+}
+
+.chip:hover {
+  border-color: var(--color-olive);
+}

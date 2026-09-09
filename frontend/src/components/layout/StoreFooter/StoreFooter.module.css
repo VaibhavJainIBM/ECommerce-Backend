@@ -1,0 +1,25 @@
+.footer {
+  color: var(--color-canvas);
+  background: var(--color-plum);
+  border-bottom: 0.3rem solid var(--color-olive);
+}
+
+.inner {
+  display: flex;
+  justify-content: center;
+  padding-block: 2rem;
+}
+
+.navigation {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  color: rgb(243 240 231 / 75%);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.navigation a:hover {
+  color: var(--color-olive-light);
+}

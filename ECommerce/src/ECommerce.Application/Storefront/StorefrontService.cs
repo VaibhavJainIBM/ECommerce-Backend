@@ -31,9 +31,37 @@ public sealed class StorefrontService(
             ? null
             : query.Search.Trim();
 
+        var brand = string.IsNullOrWhiteSpace(query.Brand)
+            ? null
+            : query.Brand.Trim();
+
         if (search?.Length > 100)
         {
             errors.Add(StorefrontErrors.SearchTooLong);
+        }
+
+        if (brand?.Length > 150)
+        {
+            errors.Add(StorefrontErrors.BrandTooLong);
+        }
+
+        if (query.MinPrice < 0 || query.MaxPrice < 0)
+        {
+            errors.Add(StorefrontErrors.PriceInvalid);
+        }
+
+        if (query.MinPrice.HasValue &&
+            query.MaxPrice.HasValue &&
+            query.MinPrice > query.MaxPrice)
+        {
+            errors.Add(StorefrontErrors.PriceRangeInvalid);
+        }
+
+        var sort = ParseSort(query.Sort);
+
+        if (sort is null)
+        {
+            errors.Add(StorefrontErrors.SortInvalid);
         }
 
         var skipAsLong =
@@ -51,10 +79,17 @@ public sealed class StorefrontService(
                 .Failure(errors);
         }
 
-        var page = await repository.SearchAsync(
+        var criteria = new StorefrontSearchCriteria(
             search,
+            brand,
+            query.MinPrice,
+            query.MaxPrice,
+            sort!.Value,
             (int)skipAsLong,
-            query.PageSize,
+            query.PageSize);
+
+        var page = await repository.SearchAsync(
+            criteria,
             cancellationToken);
 
         var items = page.Items
@@ -127,5 +162,21 @@ public sealed class StorefrontService(
             listing.PriceAmount,
             listing.CurrencyCode,
             listing.AvailableQuantity);
+    }
+
+    private static StorefrontSort? ParseSort(string? sort)
+    {
+        return sort?.Trim().ToLowerInvariant() switch
+        {
+            null or "" or StorefrontSortNames.NameAscending =>
+                StorefrontSort.NameAscending,
+            StorefrontSortNames.NameDescending =>
+                StorefrontSort.NameDescending,
+            StorefrontSortNames.PriceAscending =>
+                StorefrontSort.PriceAscending,
+            StorefrontSortNames.PriceDescending =>
+                StorefrontSort.PriceDescending,
+            _ => null
+        };
     }
 }
