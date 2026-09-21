@@ -1,0 +1,218 @@
+.shell {
+  display: grid;
+  min-height: 100vh;
+  grid-template-rows: auto 1fr auto;
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgb(243 240 231 / 96%);
+  border-top: 0.3rem solid var(--color-olive);
+  border-bottom: 1px solid var(--color-border);
+  backdrop-filter: blur(0.75rem);
+}
+
+.headerInner {
+  display: flex;
+  min-height: 5rem;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4) var(--space-6);
+  padding-block: var(--space-3);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--color-plum);
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.brandMark {
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  place-items: center;
+  color: var(--color-surface);
+  background: var(--color-plum);
+}
+
+.brand small {
+  display: block;
+  margin-top: 0.28rem;
+  color: var(--color-olive-dark);
+  font-family: var(--font-body);
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.navigation {
+  display: flex;
+  order: 3;
+  width: 100%;
+  gap: var(--space-1);
+  overflow-x: auto;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+
+.navLink {
+  flex: 0 0 auto;
+  padding: 0.55rem 0.7rem;
+  color: var(--color-muted);
+  border-bottom: 1px solid transparent;
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.navLink:hover {
+  color: var(--color-plum);
+  border-bottom-color: var(--color-olive);
+}
+
+.account {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-left: auto;
+}
+
+.email {
+  display: none;
+  max-width: 13rem;
+  overflow: hidden;
+  color: var(--color-muted);
+  font-size: 0.72rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.signOut {
+  min-height: 2.35rem;
+  padding: 0.5rem 0.75rem;
+  color: var(--color-plum);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 0;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.signOut:hover:not(:disabled) {
+  color: var(--color-surface);
+  background: var(--color-olive);
+  border-color: var(--color-olive);
+}
+
+.signOut:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.main {
+  min-width: 0;
+}
+
+.footer {
+  color: rgb(250 248 242 / 72%);
+  background: var(--color-plum);
+  border-top: 0.25rem solid var(--color-olive);
+}
+
+.footerInner {
+  display: flex;
+  min-height: 4.5rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  font-size: 0.7rem;
+}
+
+.footer a {
+  color: var(--color-olive-light);
+  border-bottom: 1px solid currentColor;
+}
+
+.deniedShell {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: var(--space-5);
+  border-top: 0.3rem solid var(--color-olive);
+}
+
+.denied {
+  width: min(100%, 38rem);
+  padding: clamp(1.5rem, 6vw, 3rem);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-top: 0.3rem solid var(--color-olive);
+}
+
+.deniedLabel {
+  color: var(--color-olive-dark);
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.denied h1 {
+  margin-top: var(--space-3);
+  color: var(--color-plum);
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 7vw, 3.5rem);
+  font-weight: 400;
+  line-height: 1;
+}
+
+.denied p:not(.deniedLabel) {
+  margin-top: var(--space-4);
+  color: var(--color-muted);
+  line-height: 1.65;
+}
+
+.denied a {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  margin-top: var(--space-5);
+  padding-inline: var(--space-4);
+  color: var(--color-surface);
+  background: var(--color-plum);
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+@media (min-width: 40rem) {
+  .email {
+    display: block;
+  }
+}
+
+@media (min-width: 64rem) {
+  .headerInner {
+    flex-wrap: nowrap;
+  }
+
+  .navigation {
+    order: initial;
+    width: auto;
+    margin-left: var(--space-5);
+    padding-top: 0;
+    border-top: 0;
+  }
+}

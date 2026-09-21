@@ -1,0 +1,136 @@
+.page {
+  padding: clamp(2.5rem, 7vw, 6rem) 0 var(--space-8);
+}
+
+.hero {
+  max-width: 55rem;
+}
+
+.eyebrow {
+  color: var(--color-olive-dark);
+  font-size: 0.67rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.title {
+  max-width: 50rem;
+  margin-top: var(--space-3);
+  color: var(--color-plum);
+  font-family: var(--font-display);
+  font-size: clamp(3.25rem, 9vw, 6.75rem);
+  font-weight: 400;
+  letter-spacing: -0.055em;
+  line-height: 0.88;
+}
+
+.description {
+  max-width: 43rem;
+  margin-top: var(--space-6);
+  color: var(--color-muted);
+  font-size: clamp(1rem, 2vw, 1.12rem);
+  line-height: 1.75;
+}
+
+.cards {
+  display: grid;
+  gap: 1px;
+  margin-top: var(--space-8);
+  background: var(--color-border);
+  border: 1px solid var(--color-border);
+}
+
+.card {
+  display: grid;
+  min-height: 19rem;
+  align-content: start;
+  padding: clamp(1.4rem, 4vw, 2rem);
+  background: var(--color-surface);
+  transition: background-color 150ms ease;
+}
+
+.card:hover {
+  background: var(--color-olive-light);
+}
+
+.cardNumber {
+  color: var(--color-olive-dark);
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.card h2 {
+  margin-top: var(--space-6);
+  color: var(--color-plum);
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 400;
+}
+
+.card p {
+  margin-top: var(--space-3);
+  color: var(--color-muted);
+  font-size: 0.87rem;
+  line-height: 1.65;
+}
+
+.cardAction {
+  align-self: end;
+  margin-top: var(--space-6);
+  color: var(--color-plum);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sequence {
+  margin-top: var(--space-8);
+  padding: clamp(1.5rem, 5vw, 3rem);
+  color: var(--color-canvas);
+  background: var(--color-plum);
+  border-top: 0.3rem solid var(--color-olive);
+}
+
+.sequence .eyebrow {
+  color: var(--color-olive-light);
+}
+
+.sequence ol {
+  display: grid;
+  gap: var(--space-5);
+  margin-top: var(--space-6);
+  list-style: none;
+}
+
+.sequence li {
+  display: grid;
+  grid-template-columns: 2rem 1fr;
+  gap: var(--space-3);
+  align-items: start;
+  color: rgb(243 240 231 / 78%);
+  line-height: 1.65;
+}
+
+.sequence li span {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  color: var(--color-plum);
+  background: var(--color-olive-light);
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+@media (min-width: 48rem) {
+  .cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .sequence ol {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

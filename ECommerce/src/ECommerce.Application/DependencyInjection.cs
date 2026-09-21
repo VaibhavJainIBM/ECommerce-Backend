@@ -12,6 +12,7 @@ using ECommerce.Application.Fulfillment;
 using ECommerce.Application.Catalog.Browsing;
 using ECommerce.Application.SellerTeams;
 using ECommerce.Application.Catalog.Importing;
+using ECommerce.Application.Administration;
 
 namespace ECommerce.Application;
 
@@ -39,6 +40,10 @@ public static class DependencyInjection
         services.AddScoped<
             IAdminCatalogImportService,
             AdminCatalogImportService>();
+
+        services.AddScoped<
+            IAdminQueryService,
+            AdminQueryService>();
 
         services.AddScoped<
             ISellerListingService,

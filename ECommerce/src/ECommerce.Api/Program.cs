@@ -8,11 +8,25 @@ using ECommerce.Api.Authorization;
 using ECommerce.Api.BackgroundJobs;
 using ECommerce.Application.Payments;
 
+const string AngularClientCors = "AngularClientCors";
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddHealthChecks();
+
+// Allow the Angular development application to call this API.
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(AngularClientCors, policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:4200")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
 
 builder.Services.AddProblemDetails(options =>
 {
@@ -26,10 +40,14 @@ builder.Services.AddProblemDetails(options =>
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 builder.Services.AddApplication();
-// Configuration alone cannot enable the simulation in Staging or Production.
-builder.Services.AddSingleton(new DemoPaymentMode(
-    builder.Environment.IsDevelopment() &&
-    builder.Configuration.GetValue<bool>("DemoPayments:Enabled")));
+
+// Configuration alone cannot enable the simulation
+// in Staging or Production.
+builder.Services.AddSingleton(
+    new DemoPaymentMode(
+        builder.Environment.IsDevelopment() &&
+        builder.Configuration.GetValue<bool>(
+            "DemoPayments:Enabled")));
 
 var connectionString =
     builder.Configuration.GetConnectionString(
@@ -74,14 +92,14 @@ builder.Services
         options =>
             !options.Enabled ||
             (!string.IsNullOrWhiteSpace(
-                options.Password) &&
+                 options.Password) &&
              options.Password.Length >= 8),
         "AdminSeed:Password is required and must " +
         "contain at least 8 characters.")
     .ValidateOnStart();
 
-
 builder.Services.AddSellerAuthorization();
+
 builder.Services.AddHostedService<OrderExpirationWorker>();
 
 var app = builder.Build();
@@ -107,6 +125,12 @@ if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
 }
+
+// Determine which endpoint matches the request.
+app.UseRouting();
+
+// CORS must run before authentication and authorization.
+app.UseCors(AngularClientCors);
 
 app.UseAuthentication();
 app.UseAuthorization();

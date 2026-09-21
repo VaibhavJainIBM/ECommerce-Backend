@@ -74,6 +74,10 @@ public static class DependencyInjection
             ProductCatalogRepository>();
 
         services.AddScoped<
+            IAdminQueryRepository,
+            AdminQueryRepository>();
+
+        services.AddScoped<
             ICatalogCsvParser,
             CatalogCsvParser>();
 
