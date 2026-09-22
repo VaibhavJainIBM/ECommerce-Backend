@@ -1,3 +1,6 @@
+using ECommerce.Payment.Api.Authentication;
+using ECommerce.Payment.Application;
+using ECommerce.Payment.Application.Abstractions;
 using ECommerce.Payment.Infrastructure;
 
 var builder =
@@ -9,20 +12,49 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddHealthChecks();
 
-var connectionString =
+builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddPaymentApplication();
+
+builder.Services.AddJwtAuthentication(
+    builder.Configuration);
+
+builder.Services.AddScoped<HttpUserContext>();
+
+builder.Services.AddScoped<ICurrentUser>(
+    sp =>
+        sp.GetRequiredService<HttpUserContext>());
+
+builder.Services.AddScoped<IAccessTokenAccessor>(
+    sp =>
+        sp.GetRequiredService<HttpUserContext>());
+
+var paymentConnection =
     builder.Configuration
         .GetConnectionString(
             "PaymentConnection");
 
 if (string.IsNullOrWhiteSpace(
-        connectionString))
+        paymentConnection))
 {
     throw new InvalidOperationException(
-        "Connection string 'PaymentConnection' was not configured.");
+        "PaymentConnection was not configured.");
+}
+
+var orderServiceUrl =
+    builder.Configuration[
+        "Services:Order"];
+
+if (string.IsNullOrWhiteSpace(
+        orderServiceUrl))
+{
+    throw new InvalidOperationException(
+        "Services:Order was not configured.");
 }
 
 builder.Services.AddPaymentInfrastructure(
-    connectionString);
+    paymentConnection,
+    orderServiceUrl);
 
 var app = builder.Build();
 
@@ -30,6 +62,10 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
+
+app.UseAuthentication();
+
+app.UseAuthorization();
 
 app.MapControllers();
 

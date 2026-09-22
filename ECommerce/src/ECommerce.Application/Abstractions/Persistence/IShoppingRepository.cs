@@ -16,4 +16,11 @@ public interface IShoppingRepository
     Task<Result<OrderResponseDto>> CancelOrderAsync(Guid customerId, Guid orderId, CancellationToken cancellationToken = default);
     Task<Result<PagedSellerOrdersResponseDto>> GetSellerOrdersAsync(Guid sellerId, int page, int pageSize, CancellationToken cancellationToken = default);
     Task<int> ExpireOrdersAsync(DateTimeOffset now, int batchSize, CancellationToken cancellationToken = default);
+    Task<Result<OrderResponseDto>> ConfirmPaymentAsync(
+    Guid customerId,
+    Guid orderId,
+    Guid paymentId,
+    decimal amount,
+    string currencyCode,
+    CancellationToken cancellationToken = default);
 }

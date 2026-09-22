@@ -108,6 +108,89 @@ public sealed partial class ShoppingRepository
         return expired;
     }
 
+    public Task<Result<OrderResponseDto>> ConfirmPaymentAsync(
+        Guid customerId,
+        Guid orderId,
+        Guid paymentId,
+        decimal amount,
+        string currencyCode,
+        CancellationToken cancellationToken = default)
+    {
+        return InTransactionAsync(
+            "order:" + orderId,
+            async () =>
+            {
+                if (!await CustomerIsActiveAsync(
+                        customerId,
+                        cancellationToken))
+                {
+                    return Result<OrderResponseDto>.Failure(
+                        ShoppingErrors.AccountUnavailable);
+                }
+
+                var order =
+                    await dbContext.Orders
+                        .Include(x => x.Items)
+                        .SingleOrDefaultAsync(
+                            x =>
+                                x.Id == orderId &&
+                                x.CustomerId == customerId,
+                            cancellationToken);
+
+                if (order is null)
+                {
+                    return Result<OrderResponseDto>.Failure(
+                        ShoppingErrors.NotFound(
+                            "The order was not found."));
+                }
+
+                if (order.Status == OrderStatus.Paid)
+                {
+                    if (order.PaidByPaymentId == paymentId)
+                    {
+                        return Result<OrderResponseDto>.Success(
+                            MapOrder(order));
+                    }
+
+                    return Result<OrderResponseDto>.Failure(
+                        ShoppingErrors.Conflict(
+                            "The order has already been paid by another payment."));
+                }
+
+                var now = DateTimeOffset.UtcNow;
+
+                if (order.Status != OrderStatus.PendingPayment ||
+                    order.ExpiresAtUtc <= now)
+                {
+                    return Result<OrderResponseDto>.Failure(
+                        ShoppingErrors.Conflict(
+                            "The order is no longer awaiting payment."));
+                }
+
+                if (order.TotalAmount != amount ||
+                    !string.Equals(
+                        order.CurrencyCode,
+                        currencyCode,
+                        StringComparison.Ordinal))
+                {
+                    return Result<OrderResponseDto>.Failure(
+                        ShoppingErrors.Conflict(
+                            "Payment amount or currency does not match the order."));
+                }
+
+                order.MarkPaid(
+                    paymentId,
+                    now);
+
+                await dbContext.SaveChangesAsync(
+                    cancellationToken);
+
+                return Result<OrderResponseDto>.Success(
+                    MapOrder(order));
+            },
+            cancellationToken);
+    }
+
     private async Task ReleaseAllocationsAsync(Order order, CancellationToken cancellationToken)
     {
         var allocations = order.Items.SelectMany(x => x.Allocations)

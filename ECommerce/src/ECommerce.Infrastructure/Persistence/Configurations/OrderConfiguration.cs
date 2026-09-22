@@ -30,6 +30,7 @@ public sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.Property(x => x.ExpiresAtUtc).HasPrecision(7).IsRequired();
         builder.Property(x => x.PaidAtUtc).HasPrecision(7);
         builder.Property(x => x.PaymentMode).HasMaxLength(16).IsUnicode(false);
+        builder.Property(x => x.PaidByPaymentId);
         builder.Property(x => x.CreatedAtUtc).HasPrecision(7).IsRequired();
         builder.Property(x => x.UpdatedAtUtc).HasPrecision(7);
         builder.Property(x => x.RowVersion).IsRowVersion().IsRequired();

@@ -46,4 +46,23 @@ public sealed class OrdersController(IShoppingService shoppingService) : Shoppin
         var result = await shoppingService.CancelOrderAsync(orderId, cancellationToken);
         return result.IsFailure ? ShoppingProblem(result.Errors) : Ok(result.Value);
     }
+
+    [HttpPost("{orderId:guid}/payment-confirmation")]
+    public async Task<ActionResult<OrderResponseDto>>
+        ConfirmPaymentAsync(
+            Guid orderId,
+            [FromBody]
+            ConfirmOrderPaymentRequestDto? request,
+            CancellationToken cancellationToken)
+    {
+        var result =
+            await shoppingService.ConfirmPaymentAsync(
+                orderId,
+                request,
+                cancellationToken);
+
+        return result.IsFailure
+            ? ShoppingProblem(result.Errors)
+            : Ok(result.Value);
+    }
 }
