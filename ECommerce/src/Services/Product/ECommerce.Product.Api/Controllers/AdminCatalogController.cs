@@ -11,7 +11,8 @@ namespace ECommerce.Product.Api.Controllers;
 [ApiController]
 [Route("api/admin/catalog/products")]
 public sealed class AdminCatalogController(
-    IAdminCatalogService catalogService)
+    IAdminCatalogService catalogService,
+    IAdminCatalogQueryService queryService)
     : ControllerBase
 {
     [HttpPost]
@@ -46,6 +47,44 @@ public sealed class AdminCatalogController(
 
         if (result.IsFailure)
             return ToProblem(result.Errors);
+
+        return Ok(result.Value!);
+    }
+
+    [HttpGet]
+    public async Task<
+        ActionResult<PagedAdminCatalogProductsResponseDto>>
+        GetProductsAsync(
+            [FromQuery] AdminCatalogQueryDto? query,
+            CancellationToken cancellationToken)
+    {
+        var result =
+            await queryService.GetProductsAsync(
+                query,
+                cancellationToken);
+
+        if (result.IsFailure)
+        {
+            var grouped =
+                result.Errors
+                    .GroupBy(error => error.Code)
+                    .ToDictionary(
+                        group => group.Key,
+                        group => group
+                            .Select(error =>
+                                error.Description)
+                            .Distinct()
+                            .ToArray());
+
+            return ValidationProblem(
+                new ValidationProblemDetails(grouped)
+                {
+                    Status =
+                        StatusCodes.Status400BadRequest,
+                    Title =
+                        "The admin catalog query is invalid."
+                });
+        }
 
         return Ok(result.Value!);
     }

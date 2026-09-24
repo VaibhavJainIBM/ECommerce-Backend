@@ -1,6 +1,7 @@
 using ECommerce.Product.Application.Catalog;
 using ECommerce.Product.Application.Catalog.Browsing;
 using Microsoft.Extensions.DependencyInjection;
+using ECommerce.Product.Application.Catalog.Importing;
 
 namespace ECommerce.Product.Application;
 
@@ -14,8 +15,16 @@ public static class DependencyInjection
             AdminCatalogService>();
 
         services.AddScoped<
+            IAdminCatalogQueryService,
+            AdminCatalogQueryService>();
+
+        services.AddScoped<
             ICatalogBrowsingService,
             CatalogBrowsingService>();
+
+        services.AddScoped<
+            IAdminCatalogImportService,
+            AdminCatalogImportService>();   
 
         return services;
     }

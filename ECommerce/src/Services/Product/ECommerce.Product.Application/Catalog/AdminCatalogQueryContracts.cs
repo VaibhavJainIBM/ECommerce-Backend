@@ -35,3 +35,7 @@ public sealed record PagedAdminCatalogProductsResponseDto(
     int PageSize,
     int TotalCount,
     int TotalPages);
+
+public sealed record AdminCatalogPage(
+    IReadOnlyCollection<AdminCatalogProductListItemDto> Items,
+    int TotalCount);
