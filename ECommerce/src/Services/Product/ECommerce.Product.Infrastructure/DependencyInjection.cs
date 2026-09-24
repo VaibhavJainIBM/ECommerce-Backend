@@ -18,8 +18,12 @@ public static class DependencyInjection
                     connectionString));
 
         services.AddScoped<
-            IProductRepository,
-            ProductRepository>();
+            IProductCatalogRepository,
+            ProductCatalogRepository>();
+
+        services.AddScoped<
+            ICatalogBrowsingRepository,
+            CatalogBrowsingRepository>();
 
         return services;
     }
