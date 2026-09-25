@@ -1,0 +1,28 @@
+name: Order service CI/CD
+
+on:
+  push:
+    branches: [main, feature/microservices-migration]
+    paths:
+      - ECommerce/src/Services/Order/**
+      - .github/workflows/order-service.yml
+      - .github/workflows/_service-ci-cd.yml
+  pull_request:
+    paths:
+      - ECommerce/src/Services/Order/**
+      - .github/workflows/order-service.yml
+      - .github/workflows/_service-ci-cd.yml
+  workflow_dispatch:
+
+jobs:
+  pipeline:
+    uses: ./.github/workflows/_service-ci-cd.yml
+    with:
+      service-name: order
+      api-project: ECommerce/src/Services/Order/ECommerce.Order.Api/ECommerce.Order.Api.csproj
+      docker-context: ./ECommerce/src/Services/Order
+      dockerfile: ./ECommerce/src/Services/Order/Dockerfile
+      image-name: ghcr.io/vaibhavjainibm/ecommerce-order-service
+      deployment-name: ecommerce-order-service
+      container-name: order-api
+    secrets: inherit

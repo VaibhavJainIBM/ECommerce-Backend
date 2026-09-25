@@ -1,0 +1,28 @@
+name: Payment service CI/CD
+
+on:
+  push:
+    branches: [main, feature/microservices-migration]
+    paths:
+      - ECommerce/src/Services/Payment/**
+      - .github/workflows/payment-service.yml
+      - .github/workflows/_service-ci-cd.yml
+  pull_request:
+    paths:
+      - ECommerce/src/Services/Payment/**
+      - .github/workflows/payment-service.yml
+      - .github/workflows/_service-ci-cd.yml
+  workflow_dispatch:
+
+jobs:
+  pipeline:
+    uses: ./.github/workflows/_service-ci-cd.yml
+    with:
+      service-name: payment
+      api-project: ECommerce/src/Services/Payment/ECommerce.Payment.Api/ECommerce.Payment.Api.csproj
+      docker-context: ./ECommerce/src/Services/Payment
+      dockerfile: ./ECommerce/src/Services/Payment/Dockerfile
+      image-name: ghcr.io/vaibhavjainibm/ecommerce-payment-service
+      deployment-name: ecommerce-payment-service
+      container-name: payment-api
+    secrets: inherit
