@@ -44,7 +44,7 @@ public sealed class PaymentService(IPaymentRepository repository, ICurrentUser c
 
     private Error? CheckAccess()
     {
-        if (!mode.Enabled) return ShoppingErrors.NotFound("Demo payments are disabled. They require Development environment and DemoPayments:Enabled=true.");
+        if (!mode.Enabled) return ShoppingErrors.NotFound("Demo payments are disabled. They require a Development or Staging environment and DemoPayments:Enabled=true.");
         if (currentUser.UserId is not Guid id || id == Guid.Empty) return ShoppingErrors.Unauthenticated;
         return null;
     }

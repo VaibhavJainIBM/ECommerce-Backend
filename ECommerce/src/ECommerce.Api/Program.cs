@@ -41,11 +41,9 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 builder.Services.AddApplication();
 
-// Configuration alone cannot enable the simulation
-// in Staging or Production.
 builder.Services.AddSingleton(
-    new DemoPaymentMode(
-        builder.Environment.IsDevelopment() &&
+    DemoPaymentMode.Resolve(
+        builder.Environment.EnvironmentName,
         builder.Configuration.GetValue<bool>(
             "DemoPayments:Enabled")));
 

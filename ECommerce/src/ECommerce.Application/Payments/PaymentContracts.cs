@@ -1,6 +1,36 @@
 namespace ECommerce.Application.Payments;
 
-public sealed record DemoPaymentMode(bool Enabled);
+public sealed record DemoPaymentMode(bool Enabled)
+{
+    public static DemoPaymentMode Resolve(
+        string? environmentName,
+        bool requested)
+    {
+        if (!requested)
+        {
+            return new DemoPaymentMode(false);
+        }
+
+        var allowed =
+            string.Equals(
+                environmentName,
+                "Development",
+                StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(
+                environmentName,
+                "Staging",
+                StringComparison.OrdinalIgnoreCase);
+
+        if (!allowed)
+        {
+            throw new InvalidOperationException(
+                "Demo payments cannot be enabled in environment " +
+                $"'{environmentName ?? "<null>"}'.");
+        }
+
+        return new DemoPaymentMode(true);
+    }
+}
 
 public sealed class CompleteDemoPaymentRequestDto
 {
