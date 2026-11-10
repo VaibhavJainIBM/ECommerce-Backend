@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ecommerce-config
+  namespace: ecommerce
+data:
+  jwt-issuer: ECommerce.Api
+  jwt-audience: ECommerce.Client
+  order-service-url: http://ecommerce-order-service/

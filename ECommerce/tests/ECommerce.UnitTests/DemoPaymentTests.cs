@@ -1,3 +1,4 @@
+using ECommerce.Application.Payments;
 using ECommerce.Domain.Entities;
 using ECommerce.Domain.Enums;
 using ECommerce.Domain.ValueObjects;
@@ -6,6 +7,42 @@ namespace ECommerce.UnitTests;
 
 public sealed class DemoPaymentTests
 {
+    [Theory]
+    [InlineData("Development")]
+    [InlineData("development")]
+    [InlineData("Staging")]
+    public void Explicit_demo_mode_is_allowed_only_in_known_nonproduction_environments(
+        string environmentName)
+    {
+        var mode = DemoPaymentMode.Resolve(environmentName, requested: true);
+
+        Assert.True(mode.Enabled);
+    }
+
+    [Theory]
+    [InlineData("Production")]
+    [InlineData("Testing")]
+    [InlineData("Custom")]
+    public void Explicit_demo_mode_fails_closed_in_other_environments(
+        string environmentName)
+    {
+        Assert.Throws<InvalidOperationException>(
+            () => DemoPaymentMode.Resolve(environmentName, requested: true));
+    }
+
+    [Theory]
+    [InlineData("Development")]
+    [InlineData("Staging")]
+    [InlineData("Production")]
+    [InlineData("Testing")]
+    public void Demo_mode_stays_disabled_when_it_was_not_requested(
+        string environmentName)
+    {
+        var mode = DemoPaymentMode.Resolve(environmentName, requested: false);
+
+        Assert.False(mode.Enabled);
+    }
+
     [Fact]
     public void Successful_attempt_replays_without_changing_time_and_cannot_become_failed()
     {

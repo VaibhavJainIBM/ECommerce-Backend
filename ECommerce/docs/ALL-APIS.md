@@ -33,7 +33,7 @@ dotnet ef database update --project '.\src\ECommerce.Infrastructure\ECommerce.In
 dotnet run --project '.\src\ECommerce.Api\ECommerce.Api.csproj' --launch-profile https
 ```
 
-The demo payment feature requires BOTH the Development environment and `DemoPayments:Enabled=true`. It is unavailable in Production even if that setting is true.
+The demo payment feature requires either the Development or Staging environment and `DemoPayments:Enabled=true`. Enabling it in Production or an unknown environment makes the API fail closed at startup.
 
 ## 2. Postman setup and role model
 

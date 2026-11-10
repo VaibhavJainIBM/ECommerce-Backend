@@ -229,6 +229,9 @@ namespace ECommerce.Infrastructure.Persistence.Migrations
                         .HasPrecision(7)
                         .HasColumnType("datetimeoffset(7)");
 
+                    b.Property<Guid?>("PaidByPaymentId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("PaymentMode")
                         .HasMaxLength(16)
                         .IsUnicode(false)

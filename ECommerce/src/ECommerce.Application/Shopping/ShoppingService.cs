@@ -131,6 +131,58 @@ public sealed class ShoppingService(
                 : Invalid<PagedSellerOrdersResponseDto>("Page must be positive, PageSize must be 1..100, and the offset must not exceed Int32.MaxValue.");
         });
 
+
+    public Task<Result<OrderResponseDto>> ConfirmPaymentAsync(
+        Guid orderId,
+        ConfirmOrderPaymentRequestDto? request,
+        CancellationToken cancellationToken = default)
+    {
+        return ForUser(
+            customerId =>
+            {
+                if (orderId == Guid.Empty)
+                {
+                    return Invalid<OrderResponseDto>(
+                        "Order ID is required.");
+                }
+
+                if (request is null ||
+                    request.PaymentId == Guid.Empty)
+                {
+                    return Invalid<OrderResponseDto>(
+                        "Payment ID is required.");
+                }
+
+                if (request.Amount <= 0 ||
+                    decimal.Round(
+                        request.Amount,
+                        2) != request.Amount)
+                {
+                    return Invalid<OrderResponseDto>(
+                        "Payment amount must be positive and have at most two decimal places.");
+                }
+
+                var rawCurrency =
+                    request.CurrencyCode?.Trim();
+
+                if (!AsciiLetters(
+                        rawCurrency,
+                        3))
+                {
+                    return Invalid<OrderResponseDto>(
+                        "CurrencyCode must contain three ASCII letters.");
+                }
+
+                return repository.ConfirmPaymentAsync(
+                    customerId,
+                    orderId,
+                    request.PaymentId,
+                    request.Amount,
+                    rawCurrency!.ToUpperInvariant(),
+                    cancellationToken);
+            });
+    }
+
     private Task<Result<T>> ForUser<T>(Func<Guid, Task<Result<T>>> operation)
     {
         var id = currentUser.UserId;

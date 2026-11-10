@@ -271,5 +271,19 @@ public sealed class ShoppingServiceTests
         public Task<Result<PagedSellerOrdersResponseDto>> GetSellerOrdersAsync(Guid sellerId, int page, int pageSize, CancellationToken cancellationToken = default)
         { LastPage = page; LastPageSize = pageSize; return Record<PagedSellerOrdersResponseDto>(Guid.Empty, sellerId, cancellationToken); }
         public Task<int> ExpireOrdersAsync(DateTimeOffset now, int batchSize, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+
+        public Task<Result<OrderResponseDto>> ConfirmPaymentAsync(
+            Guid customerId,
+            Guid orderId,
+            Guid paymentId,
+            decimal amount,
+            string currencyCode,
+            CancellationToken cancellationToken = default)
+        {
+            return Record<OrderResponseDto>(
+                customerId,
+                orderId,
+                cancellationToken);
+        }
     }
 }

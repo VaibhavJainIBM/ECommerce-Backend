@@ -13,4 +13,8 @@ public interface IShoppingService
     Task<Result<OrderResponseDto>> GetOrderAsync(Guid orderId, CancellationToken cancellationToken = default);
     Task<Result<OrderResponseDto>> CancelOrderAsync(Guid orderId, CancellationToken cancellationToken = default);
     Task<Result<PagedSellerOrdersResponseDto>> GetSellerOrdersAsync(Guid sellerId, OrderQueryDto? query, CancellationToken cancellationToken = default);
+    Task<Result<OrderResponseDto>> ConfirmPaymentAsync(
+    Guid orderId,
+    ConfirmOrderPaymentRequestDto? request,
+    CancellationToken cancellationToken = default);
 }

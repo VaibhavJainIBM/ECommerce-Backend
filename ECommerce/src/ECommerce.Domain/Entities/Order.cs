@@ -55,6 +55,7 @@ public sealed class Order : AuditableEntity
     public OrderStatus Status { get; private set; }
     public DateTimeOffset ExpiresAtUtc { get; private set; }
     public DateTimeOffset? PaidAtUtc { get; private set; }
+    public Guid? PaidByPaymentId { get; private set; }
     public string? PaymentMode { get; private set; }
     public byte[] RowVersion { get; private set; } = Array.Empty<byte>();
     public ICollection<OrderItem> Items { get; private set; } = new List<OrderItem>();
@@ -83,12 +84,52 @@ public sealed class Order : AuditableEntity
     public void MarkPaid(DateTimeOffset now)
     {
         if (Status != OrderStatus.PendingPayment || ExpiresAtUtc <= now)
-            throw new InvalidOperationException("Only an unexpired pending order can be paid.");
+            throw new InvalidOperationException(
+                "Only an unexpired pending order can be paid.");
+
         if (Items.Count == 0 || TotalAmount <= 0)
-            throw new InvalidOperationException("An empty order cannot be paid.");
+            throw new InvalidOperationException(
+                "An empty order cannot be paid.");
+
         Status = OrderStatus.Paid;
         PaidAtUtc = now;
         PaymentMode = "Demo";
+        MarkUpdated();
+    }
+
+    public void MarkPaid(
+        Guid paymentId,
+        DateTimeOffset now)
+    {
+        if (paymentId == Guid.Empty)
+            throw new ArgumentException(
+                "Payment ID is required.",
+                nameof(paymentId));
+
+        if (Status == OrderStatus.Paid &&
+            PaidByPaymentId == paymentId)
+        {
+            return;
+        }
+
+        if (Status != OrderStatus.PendingPayment ||
+            ExpiresAtUtc <= now)
+        {
+            throw new InvalidOperationException(
+                "Only an unexpired pending order can be paid.");
+        }
+
+        if (Items.Count == 0 || TotalAmount <= 0)
+        {
+            throw new InvalidOperationException(
+                "An empty order cannot be paid.");
+        }
+
+        Status = OrderStatus.Paid;
+        PaidAtUtc = now;
+        PaymentMode = "Demo";
+        PaidByPaymentId = paymentId;
+
         MarkUpdated();
     }
 

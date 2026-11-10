@@ -1,0 +1,120 @@
+name: Reusable microservice CI/CD
+
+on:
+  workflow_call:
+    inputs:
+      service-name:
+        required: true
+        type: string
+      api-project:
+        required: true
+        type: string
+      docker-context:
+        required: true
+        type: string
+      dockerfile:
+        required: true
+        type: string
+      image-name:
+        required: true
+        type: string
+      deployment-name:
+        required: true
+        type: string
+      container-name:
+        required: true
+        type: string
+    secrets:
+      KUBE_CONFIG:
+        required: false
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    name: Build ${{ inputs.service-name }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore "${{ inputs.api-project }}"
+
+      - name: Build
+        run: dotnet build "${{ inputs.api-project }}" --configuration Release --no-restore
+
+      - name: Publish
+        run: dotnet publish "${{ inputs.api-project }}" --configuration Release --no-build --output "${{ runner.temp }}/publish"
+
+  container:
+    name: Build and publish container
+    needs: build
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.image.outputs.image }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ inputs.docker-context }}
+          file: ${{ inputs.dockerfile }}
+          push: true
+          tags: |
+            ${{ inputs.image-name }}:${{ github.sha }}
+            ${{ github.ref == 'refs/heads/main' && format('{0}:latest', inputs.image-name) || '' }}
+          cache-from: type=gha,scope=${{ inputs.service-name }}
+          cache-to: type=gha,mode=max,scope=${{ inputs.service-name }}
+
+      - name: Record image
+        id: image
+        shell: bash
+        run: echo "image=${{ inputs.image-name }}:${{ github.sha }}" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    name: Deploy to Kubernetes
+    needs: container
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
+    steps:
+      - name: Explain skipped deployment
+        if: env.KUBE_CONFIG == ''
+        run: echo "KUBE_CONFIG is not configured; the image was published but Kubernetes deployment was skipped."
+
+      - name: Set up kubectl
+        if: env.KUBE_CONFIG != ''
+        uses: azure/setup-kubectl@v4
+
+      - name: Configure cluster access
+        if: env.KUBE_CONFIG != ''
+        shell: bash
+        run: |
+          echo "$KUBE_CONFIG" | base64 --decode > "$RUNNER_TEMP/kubeconfig"
+          chmod 600 "$RUNNER_TEMP/kubeconfig"
+          echo "KUBECONFIG=$RUNNER_TEMP/kubeconfig" >> "$GITHUB_ENV"
+
+      - name: Roll out image
+        if: env.KUBE_CONFIG != ''
+        run: |
+          kubectl -n ecommerce set image deployment/${{ inputs.deployment-name }} ${{ inputs.container-name }}=${{ needs.container.outputs.image }}
+          kubectl -n ecommerce rollout status deployment/${{ inputs.deployment-name }} --timeout=180s

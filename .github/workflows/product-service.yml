@@ -1,0 +1,28 @@
+name: Product service CI/CD
+
+on:
+  push:
+    branches: [main, feature/microservices-migration]
+    paths:
+      - ECommerce/src/Services/Product/**
+      - .github/workflows/product-service.yml
+      - .github/workflows/_service-ci-cd.yml
+  pull_request:
+    paths:
+      - ECommerce/src/Services/Product/**
+      - .github/workflows/product-service.yml
+      - .github/workflows/_service-ci-cd.yml
+  workflow_dispatch:
+
+jobs:
+  pipeline:
+    uses: ./.github/workflows/_service-ci-cd.yml
+    with:
+      service-name: product
+      api-project: ECommerce/src/Services/Product/ECommerce.Product.Api/ECommerce.Product.Api.csproj
+      docker-context: ./ECommerce/src/Services/Product
+      dockerfile: ./ECommerce/src/Services/Product/Dockerfile
+      image-name: ghcr.io/vaibhavjainibm/ecommerce-product-service
+      deployment-name: ecommerce-product-service
+      container-name: product-api
+    secrets: inherit

@@ -6,6 +6,9 @@
 # dotenv files
 .env
 
+# Local AI service credentials
+appsettings.Local.json
+
 # User-specific files
 *.rsuser
 *.suo

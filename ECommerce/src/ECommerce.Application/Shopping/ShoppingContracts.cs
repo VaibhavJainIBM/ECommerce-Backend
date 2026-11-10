@@ -69,3 +69,11 @@ public sealed record CheckoutCommand(
     Guid CustomerId, Guid CheckoutKey, string RequestHash, byte[] CartRowVersion,
     decimal ExpectedTotalAmount, string CurrencyCode, string RecipientName,
     string Phone, Address ShippingAddress);
+
+
+public sealed class ConfirmOrderPaymentRequestDto
+{
+    public Guid PaymentId { get; init; }
+    public decimal Amount { get; init; }
+    public string? CurrencyCode { get; init; }
+}
