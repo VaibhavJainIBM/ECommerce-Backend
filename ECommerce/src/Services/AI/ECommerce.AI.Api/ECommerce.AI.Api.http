@@ -1,0 +1,26 @@
+@ai = http://localhost:5300
+
+### Health
+GET {{ai}}/health
+
+### Build the local in-memory index from current storefront listings
+POST {{ai}}/api/ai/admin/reindex
+
+### Anonymous or personalized recommendations
+POST {{ai}}/api/ai/recommendations
+Content-Type: application/json
+
+{
+  "query": "comfortable products for daily use",
+  "excludeListingIds": [],
+  "take": 6
+}
+
+### Chat
+POST {{ai}}/api/ai/chat
+Content-Type: application/json
+
+{
+  "message": "What is in my cart and what would you recommend?",
+  "history": []
+}
